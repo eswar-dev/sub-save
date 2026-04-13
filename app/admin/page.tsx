@@ -52,7 +52,7 @@ export default function AdminPage() {
         setLoading(false)
       })
       .catch(() => { setError('Failed to load metrics'); setLoading(false) })
-  }, [router])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const F = { fontFamily: 'Plus Jakarta Sans, -apple-system, sans-serif' }
 
@@ -134,7 +134,7 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {metrics.sessions.map((s) => (
+              {(metrics.sessions ?? []).map((s) => (
                 <tr key={s.id} style={{ borderBottom: '1px solid rgba(15,76,129,0.05)' }}>
                   <td style={{ padding: '10px 14px', color: '#1e293b', fontWeight: 500, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email ?? '—'}</td>
                   <td style={{ padding: '10px 14px', color: '#475569' }}>{formatINR(s.total_spend)}</td>
