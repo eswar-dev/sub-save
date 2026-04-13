@@ -159,7 +159,7 @@ export default function ResultsScreen() {
       </div>
 
       {/* Scroll area */}
-      <div className="scrollbar-hide" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px 130px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="scrollbar-hide" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '14px 20px calc(90px + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 8 }}>
 
         {/* Category overlap insight */}
         {overlapCat && (
@@ -215,7 +215,7 @@ export default function ResultsScreen() {
       {/* Footer: Share + Copy */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '14px 20px 32px',
+        padding: '14px 20px max(20px, env(safe-area-inset-bottom, 20px))',
         background: 'linear-gradient(to top, rgba(219,234,254,0.96) 62%, transparent)',
       }}>
         <div style={{ display: 'flex', gap: 10 }}>

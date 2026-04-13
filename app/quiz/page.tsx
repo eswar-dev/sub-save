@@ -67,7 +67,7 @@ export default function QuizPage() {
   }, [activeScreen])
 
   return (
-    <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
       <WelcomeScreen />
       <AppSelectScreen />
       <QuestionsScreen />
