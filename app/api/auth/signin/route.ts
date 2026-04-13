@@ -12,8 +12,9 @@ const ALLOWED_DOMAINS = new Set([
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json()
-    if (!email || !email.includes('@')) {
+    const body = await request.json()
+    const email = body?.email
+    if (typeof email !== 'string' || !email.trim() || !email.includes('@')) {
       return Response.json({ allowed: false, found: false, error: 'Invalid email' }, { status: 400 })
     }
 
@@ -32,13 +33,17 @@ export async function POST(request: NextRequest) {
       .eq('email', email)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
 
-    if (error || !data) {
+    if (error) {
+      console.error('Session lookup error:', error)
+      return Response.json({ allowed: false, found: false, error: 'Internal error' }, { status: 500 })
+    }
+
+    if (!data || data.length === 0) {
       return Response.json({ allowed: true, found: false })
     }
 
-    return Response.json({ allowed: true, found: true, session: data })
+    return Response.json({ allowed: true, found: true, session: data[0] })
   } catch (err) {
     console.error('Signin error:', err)
     return Response.json({ allowed: false, found: false, error: 'Internal error' }, { status: 500 })
