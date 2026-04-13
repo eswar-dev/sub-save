@@ -52,8 +52,8 @@ export default function SignInSheet({ open, onClose }: Props) {
       }, 1200)
     } catch {
       setError('Something went wrong. Please try again.')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
