@@ -61,7 +61,7 @@ export interface QuizStore {
   reset: () => void
 }
 
-function getLocalSessionId(): string {
+export function getLocalSessionId(): string {
   if (typeof window === 'undefined') return `sps_${Date.now()}_${Math.random().toString(36).slice(2)}`
   let id = localStorage.getItem('sps_session_id')
   if (!id) {

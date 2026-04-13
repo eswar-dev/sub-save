@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useQuizStore } from '@/lib/store/quizStore'
+import { useQuizStore, getLocalSessionId } from '@/lib/store/quizStore'
 import { AppResult } from '@/lib/scoring'
 import { getLogoUrl, hashColor, formatINR } from '@/lib/data/apps'
 import { track } from '@/lib/analytics'
@@ -36,7 +36,7 @@ export default function ResultsScreen() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        session_id: localStorage.getItem('sps_session_id'),
+        session_id: getLocalSessionId(),
         apps_selected: results,
         total_spend: totalSpend,
         total_savings: totalSavings,
