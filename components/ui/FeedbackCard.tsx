@@ -5,11 +5,15 @@ import { track } from '@/lib/analytics'
 
 interface Props {
   sessionId: string | null
+  // When true, renders as a floating modal overlay with backdrop + close button
+  asModal?: boolean
+  open?: boolean
+  onClose?: () => void
 }
 
 const FEEDBACK_KEY = 'sps_feedback_done'
 
-export default function FeedbackCard({ sessionId }: Props) {
+export default function FeedbackCard({ sessionId, asModal = false, open = true, onClose }: Props) {
   const [decision, setDecision] = useState<'yes' | 'maybe' | 'no' | null>(null)
   const [rating, setRating] = useState(0)
   const [text, setText] = useState('')
@@ -21,6 +25,7 @@ export default function FeedbackCard({ sessionId }: Props) {
   }, [])
 
   if (dismissed === null || dismissed) return null
+  if (asModal && !open) return null
 
   async function handleSubmit() {
     const meta = { decision, rating, text: text.trim() || null, recommend }
@@ -34,23 +39,47 @@ export default function FeedbackCard({ sessionId }: Props) {
     }
     localStorage.setItem(FEEDBACK_KEY, '1')
     setDismissed(true)
+    onClose?.()
   }
 
   function handleSkip() {
     track('feedback_skipped')
     localStorage.setItem(FEEDBACK_KEY, '1')
     setDismissed(true)
+    onClose?.()
   }
 
-  return (
+  const card = (
     <div style={{
-      background: 'rgba(255,255,255,0.68)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-      border: '1.5px solid rgba(255,255,255,0.55)', borderRadius: 22,
+      background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+      border: '1.5px solid rgba(255,255,255,0.7)', borderRadius: 24,
       padding: '20px 18px',
-      boxShadow: '0 4px 24px rgba(15,76,129,0.08), inset 0 1px 0 rgba(255,255,255,0.7)',
-      marginTop: 8,
+      boxShadow: '0 8px 40px rgba(15,76,129,0.14), inset 0 1px 0 rgba(255,255,255,0.8)',
+      width: '100%', maxWidth: 340,
+      position: 'relative',
     }}>
-      <div style={{ fontSize: 14, fontWeight: 800, color: '#1e293b', marginBottom: 16 }}>Quick question</div>
+      {/* Close button (modal mode only) */}
+      {asModal && (
+        <button
+          onClick={handleSkip}
+          style={{
+            position: 'absolute', top: 14, right: 14,
+            width: 28, height: 28, borderRadius: '50%',
+            background: 'rgba(15,76,129,0.08)', border: 'none',
+            fontSize: 16, color: '#475569', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'Plus Jakarta Sans, sans-serif',
+            lineHeight: 1,
+          }}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      )}
+
+      <div style={{ fontSize: 14, fontWeight: 800, color: '#1e293b', marginBottom: 16, paddingRight: asModal ? 32 : 0 }}>
+        Quick question
+      </div>
 
       {/* Q1: Decision */}
       <div style={{ marginBottom: 14 }}>
@@ -92,15 +121,17 @@ export default function FeedbackCard({ sessionId }: Props) {
 
       {/* Q3: Text */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 12, color: '#475569', fontWeight: 600, marginBottom: 8 }}>What would make this better? <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span></div>
+        <div style={{ fontSize: 12, color: '#475569', fontWeight: 600, marginBottom: 8 }}>
+          What would make this better? <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
+        </div>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Tell us anything…"
           style={{
-            width: '100%', minHeight: 72, padding: '12px 14px', resize: 'none',
+            width: '100%', minHeight: 64, padding: '10px 14px', resize: 'none',
             background: 'rgba(255,255,255,0.7)', border: '1.5px solid rgba(15,76,129,0.12)', borderRadius: 14,
-            fontSize: 14, color: '#1e293b', fontFamily: 'Plus Jakarta Sans, sans-serif', outline: 'none',
+            fontSize: 13, color: '#1e293b', fontFamily: 'Plus Jakarta Sans, sans-serif', outline: 'none',
           }}
         />
       </div>
@@ -129,12 +160,14 @@ export default function FeedbackCard({ sessionId }: Props) {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={handleSkip} style={{
-          flex: 1, height: 42, background: 'rgba(255,255,255,0.6)', border: '1.5px solid rgba(15,76,129,0.12)',
-          borderRadius: 100, fontSize: 13, fontWeight: 700, color: '#475569', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif',
-        }}>
-          Skip →
-        </button>
+        {!asModal && (
+          <button onClick={handleSkip} style={{
+            flex: 1, height: 42, background: 'rgba(255,255,255,0.6)', border: '1.5px solid rgba(15,76,129,0.12)',
+            borderRadius: 100, fontSize: 13, fontWeight: 700, color: '#475569', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif',
+          }}>
+            Skip →
+          </button>
+        )}
         <button
           onClick={handleSubmit}
           disabled={!decision}
@@ -148,6 +181,26 @@ export default function FeedbackCard({ sessionId }: Props) {
           Submit
         </button>
       </div>
+    </div>
+  )
+
+  if (!asModal) {
+    return <div style={{ marginTop: 8 }}>{card}</div>
+  }
+
+  // Modal overlay — centered, above everything
+  return (
+    <div
+      style={{
+        position: 'absolute', inset: 0, zIndex: 300,
+        background: 'rgba(15,76,129,0.22)',
+        backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '0 20px',
+        animation: 'stagger-in 0.25s ease forwards',
+      }}
+    >
+      {card}
     </div>
   )
 }

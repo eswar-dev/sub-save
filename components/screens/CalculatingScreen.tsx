@@ -42,7 +42,7 @@ export default function CalculatingScreen() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center"
+      className="flex flex-col items-center justify-center page-enter"
       style={{
         position: 'absolute', inset: 0,
         padding: 24,
