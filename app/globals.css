@@ -27,7 +27,7 @@
   --animate-pulse-dot:  pulse-dot 2s ease-in-out infinite;
   --animate-spin-ring:  spin-ring 0.9s linear infinite;
   --animate-pop:        counter-pop 0.28s cubic-bezier(0.34,1.56,0.64,1);
-  --animate-stagger-in: stagger-in 0.4s ease forwards;
+  --animate-stagger-in: stagger-in 0.22s ease forwards;
 }
 
 @keyframes pulse-dot {
@@ -43,7 +43,7 @@
   100% { transform: scale(1); }
 }
 @keyframes stagger-in {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeout {
@@ -149,6 +149,20 @@ html, body {
 
 /* ─── SWIPE HINT FADE ─── */
 .swipe-fade { animation: fadeout 1s ease 3s forwards; }
+
+/* ─── PILL STRIP: right-edge fade so users see it's scrollable ─── */
+.pill-strip-wrap {
+  position: relative;
+}
+.pill-strip-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 12px;
+  width: 32px;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.85));
+  border-top-right-radius: 4px;
+}
 
 /* ─── INPUT STYLE ─── */
 .gate-input {

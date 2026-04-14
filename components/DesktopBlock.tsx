@@ -12,7 +12,10 @@ export default function DesktopBlock({ children }: { children: React.ReactNode }
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  if (isDesktop) {
+  // Allow full viewport in dev for easier testing
+  const isDev = process.env.NODE_ENV === 'development'
+
+  if (isDesktop && !isDev) {
     return (
       <div style={{
         minHeight: '100vh',

@@ -1,21 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { track } from '@/lib/analytics'
 
 interface Props {
   sessionId: string | null
 }
 
+const FEEDBACK_KEY = 'sps_feedback_done'
+
 export default function FeedbackCard({ sessionId }: Props) {
   const [decision, setDecision] = useState<'yes' | 'maybe' | 'no' | null>(null)
   const [rating, setRating] = useState(0)
   const [text, setText] = useState('')
   const [recommend, setRecommend] = useState<'yes' | 'no' | null>(null)
-  const [submitted, setSubmitted] = useState(false)
-  const [skipped, setSkipped] = useState(false)
+  const [dismissed, setDismissed] = useState<boolean | null>(null)
 
-  if (submitted || skipped) return null
+  useEffect(() => {
+    setDismissed(typeof window !== 'undefined' && localStorage.getItem(FEEDBACK_KEY) === '1')
+  }, [])
+
+  if (dismissed === null || dismissed) return null
 
   async function handleSubmit() {
     const meta = { decision, rating, text: text.trim() || null, recommend }
@@ -27,12 +32,14 @@ export default function FeedbackCard({ sessionId }: Props) {
         body: JSON.stringify({ feedback_meta: meta }),
       }).catch(() => {})
     }
-    setSubmitted(true)
+    localStorage.setItem(FEEDBACK_KEY, '1')
+    setDismissed(true)
   }
 
   function handleSkip() {
     track('feedback_skipped')
-    setSkipped(true)
+    localStorage.setItem(FEEDBACK_KEY, '1')
+    setDismissed(true)
   }
 
   return (

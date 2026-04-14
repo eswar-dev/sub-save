@@ -13,7 +13,7 @@ const MESSAGES = [
   'Building your verdict',
 ]
 
-const DELAY_MS = 2800
+const DELAY_MS = 2000
 
 export default function CalculatingScreen() {
   const router = useRouter()
@@ -26,7 +26,7 @@ export default function CalculatingScreen() {
 
     const interval = setInterval(() => {
       setMsgIdx((i) => (i + 1) % MESSAGES.length)
-    }, 500)
+    }, 400)
 
     const timeout = setTimeout(() => {
       clearInterval(interval)
