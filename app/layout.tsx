@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import DesktopBlock from '@/components/DesktopBlock'
+import PostHogProvider from '@/providers/PostHogProvider'
 
 export const metadata: Metadata = {
   title: 'SUB PAY SAVER — Find which subscriptions to cancel',
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <meta name="theme-color" content="#0F4C81" />
       </head>
-      <body className="h-full"><DesktopBlock>{children}</DesktopBlock></body>
+      <body className="h-full"><PostHogProvider><DesktopBlock>{children}</DesktopBlock></PostHogProvider></body>
     </html>
   )
 }
