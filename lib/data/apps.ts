@@ -1,4 +1,4 @@
-export type Category = 'streaming' | 'music' | 'food' | 'cloud' | 'fitness' | 'work' | 'shopping'
+export type Category = 'streaming' | 'music' | 'food' | 'cloud' | 'fitness' | 'work' | 'shopping' | 'other'
 
 export interface AppPlan {
   n: string
@@ -56,6 +56,7 @@ export const CATEGORIES: { id: Category; label: string }[] = [
   { id: 'fitness',   label: '💪 Fitness' },
   { id: 'work',      label: '💼 Work' },
   { id: 'shopping',  label: '🛍️ Shopping' },
+  { id: 'other',     label: '📦 Other' },
 ]
 
 // Logo URL — Google Favicon API (prototype-grade; replace with licensed assets for prod)

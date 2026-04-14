@@ -150,6 +150,20 @@ html, body {
 /* ─── SWIPE HINT FADE ─── */
 .swipe-fade { animation: fadeout 1s ease 3s forwards; }
 
+/* ─── PILL STRIP: right-edge fade so users see it's scrollable ─── */
+.pill-strip-wrap {
+  position: relative;
+}
+.pill-strip-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 12px;
+  width: 32px;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.85));
+  border-top-right-radius: 4px;
+}
+
 /* ─── INPUT STYLE ─── */
 .gate-input {
   width: 100%;

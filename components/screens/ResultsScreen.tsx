@@ -10,6 +10,7 @@ import { formatDate } from '@/lib/utils'
 import FeedbackCard from '@/components/ui/FeedbackCard'
 import ReminderGateSheet from '@/components/sheets/ReminderGateSheet'
 import ReminderConfigSheet from '@/components/sheets/ReminderConfigSheet'
+import SignInSheet from '@/components/sheets/SignInSheet'
 
 export default function ResultsScreen() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function ResultsScreen() {
   const [gateApp, setGateApp] = useState<AppResult | null>(null)
   const [reminderApp, setReminderApp] = useState<AppResult | null>(null)
   const [disagreeApp, setDisagreeApp] = useState<AppResult | null>(null)
+  const [signinOpen, setSigninOpen] = useState(false)
 
   const cancelResults = results.filter((r) => r.verdict === 'cancel')
   const reviewResults = results.filter((r) => r.verdict === 'review')
@@ -226,8 +228,12 @@ export default function ResultsScreen() {
           app={gateApp}
           onClose={() => setGateApp(null)}
           onSuccess={() => { setGateApp(null); setReminderApp(gateApp) }}
+          onSignIn={() => setSigninOpen(true)}
         />
       )}
+
+      {/* Sign-in sheet (from gate link) */}
+      <SignInSheet open={signinOpen} onClose={() => setSigninOpen(false)} />
 
       {/* Reminder config */}
       {reminderApp && (

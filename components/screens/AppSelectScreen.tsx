@@ -13,11 +13,13 @@ const MAX_CUSTOM = 5
 
 export default function AppSelectScreen() {
   const router = useRouter()
-  const { selected, totalSpend, selectApp, deselectApp, buildCards, resetAnswers } = useQuizStore()
+  const { selected, totalSpend, selectApp, deselectApp, buildCards, resetAnswers, cards } = useQuizStore()
   const [planApp, setPlanApp] = useState<App | null>(null)
   const [manualOpen, setManualOpen] = useState(false)
   const [popCounter, setPopCounter] = useState(false)
+  const [activeCat, setActiveCat] = useState<string>('streaming')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const pillStripRef = useRef<HTMLDivElement>(null)
   const prevSpend = useRef(totalSpend)
 
   const selectedCount = Object.keys(selected).length
@@ -33,6 +35,32 @@ export default function AppSelectScreen() {
       return () => clearTimeout(t)
     }
   }, [totalSpend])
+
+  // Scroll-spy: watch category sections, update active pill, auto-scroll pill strip
+  useEffect(() => {
+    const sections = CATEGORIES
+      .filter((c) => c.id !== 'other')
+      .map((c) => document.getElementById(`cat-section-${c.id}`))
+      .filter((el): el is HTMLElement => !!el)
+    if (sections.length === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+        if (visible.length > 0) {
+          const id = visible[0].target.id.replace('cat-section-', '')
+          setActiveCat(id)
+          const pill = pillStripRef.current?.querySelector<HTMLButtonElement>(`[data-pill="${id}"]`)
+          pill?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+        }
+      },
+      { root: scrollRef.current, rootMargin: '-20% 0px -70% 0px', threshold: [0, 0.1, 0.5] },
+    )
+    sections.forEach((s) => observer.observe(s))
+    return () => observer.disconnect()
+  }, [])
 
   // All apps including custom ones from selected
   const customApps = Object.values(selected).filter((a) => a.custom)
@@ -65,8 +93,14 @@ export default function AppSelectScreen() {
   }
 
   function handleContinue() {
-    resetAnswers()
-    buildCards()
+    // Only rebuild cards + wipe answers if the selection changed since last quiz build.
+    // Preserves cardIndex + answers when user taps Back from Questions to tweak apps.
+    const selectedIds = Object.keys(selected).sort().join('|')
+    const builtIds = cards.filter((c) => c.questionNum === 1).map((c) => c.appId).sort().join('|')
+    if (selectedIds !== builtIds) {
+      resetAnswers()
+      buildCards()
+    }
     router.push('/quiz/questions')
     track('questions_started', { app_count: selectedCount, total_spend: totalSpend })
   }
@@ -125,17 +159,21 @@ export default function AppSelectScreen() {
         </div>
 
         {/* Pill strip */}
-        <div style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '10px 0 12px', scrollbarWidth: 'none' }}
+        <div className="pill-strip-wrap">
+        <div ref={pillStripRef} style={{ display: 'flex', gap: 7, overflowX: 'auto', padding: '10px 0 12px', scrollbarWidth: 'none' }}
           className="scrollbar-hide">
-          {CATEGORIES.map((cat) => (
+          {CATEGORIES.filter((c) => c.id !== 'other').map((cat) => (
             <button
               key={cat.id}
+              data-pill={cat.id}
               onClick={() => scrollToCategory(cat.id)}
               style={{
                 flexShrink: 0, height: 30, padding: '0 13px',
-                borderRadius: 100, border: '1px solid rgba(15,76,129,0.14)',
-                background: 'rgba(255,255,255,0.55)', color: '#475569',
-                fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                borderRadius: 100,
+                border: `1px solid ${activeCat === cat.id ? 'rgba(15,76,129,0.5)' : 'rgba(15,76,129,0.14)'}`,
+                background: activeCat === cat.id ? 'rgba(15,76,129,0.1)' : 'rgba(255,255,255,0.55)',
+                color: activeCat === cat.id ? '#0F4C81' : '#475569',
+                fontSize: 11, fontWeight: activeCat === cat.id ? 800 : 700, cursor: 'pointer',
                 backdropFilter: 'blur(8px)', whiteSpace: 'nowrap',
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
                 transition: 'all 0.2s',
@@ -144,6 +182,7 @@ export default function AppSelectScreen() {
               {cat.label}
             </button>
           ))}
+        </div>
         </div>
       </div>
 
