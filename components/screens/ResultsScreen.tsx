@@ -13,7 +13,7 @@ import ReminderConfigSheet from '@/components/sheets/ReminderConfigSheet'
 
 export default function ResultsScreen() {
   const router = useRouter()
-  const { results, totalSpend, sessionId, reminderPaid, userEmail, lastAuditDate, isReturningUser, reset, resetAnswers } = useQuizStore()
+  const { results, totalSpend, sessionId, reminderPaid, userEmail, lastAuditDate, isReturningUser, resetAnswers } = useQuizStore()
   const [gateApp, setGateApp] = useState<AppResult | null>(null)
   const [reminderApp, setReminderApp] = useState<AppResult | null>(null)
   const [disagreeApp, setDisagreeApp] = useState<AppResult | null>(null)
@@ -152,57 +152,59 @@ export default function ResultsScreen() {
         </div>
       </div>
 
-      {/* Scroll area */}
-      <div className="scrollbar-hide" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '14px 20px calc(90px + env(safe-area-inset-bottom, 0px))', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Scroll area — plain block so flex doesn't shrink children */}
+      <div className="scrollbar-hide" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 20px calc(90px + env(safe-area-inset-bottom, 0px))' }}>
 
-        {/* Category overlap insight */}
-        {overlapCat && (
-          <div style={{
-            background: 'rgba(254,243,199,0.72)', border: '1px solid rgba(245,158,11,0.2)',
-            borderRadius: 18, padding: '14px 16px',
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-          }}>
-            <span style={{ fontSize: 20 }}>⚡</span>
-            <div style={{ fontSize: 13, color: '#92400e', fontWeight: 500, lineHeight: 1.4 }}>
-              You have <strong>{catCounts[overlapCat[0]]}</strong> {overlapCat[0]} subscriptions. Most users actively use only 1–2.
+          {/* Category overlap insight */}
+          {overlapCat && (
+            <div style={{
+              background: 'rgba(254,243,199,0.72)', border: '1px solid rgba(245,158,11,0.2)',
+              borderRadius: 18, padding: '14px 16px',
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+            }}>
+              <span style={{ fontSize: 20 }}>⚡</span>
+              <div style={{ fontSize: 13, color: '#92400e', fontWeight: 500, lineHeight: 1.4 }}>
+                You have <strong>{catCounts[overlapCat[0]]}</strong> {overlapCat[0]} subscriptions. Most users actively use only 1–2.
+              </div>
             </div>
+          )}
+
+          {/* Verdict cards */}
+          {results.map((result) => (
+            <VerdictCard
+              key={result.id}
+              result={result}
+              reminderPaid={reminderPaid}
+              onBell={() => handleBellTap(result)}
+              onDisagree={() => setDisagreeApp(result)}
+            />
+          ))}
+
+          {/* Family plan disclaimer */}
+          <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontWeight: 500, marginTop: 4 }}>
+            Prices shown are full plan cost. If you share with family, your actual savings are even higher.
           </div>
-        )}
 
-        {/* Verdict cards */}
-        {results.map((result) => (
-          <VerdictCard
-            key={result.id}
-            result={result}
-            reminderPaid={reminderPaid}
-            onBell={() => handleBellTap(result)}
-            onDisagree={() => setDisagreeApp(result)}
-          />
-        ))}
+          {/* Re-run button (returning users) */}
+          {isReturningUser && (
+            <button
+              onClick={() => { resetAnswers(); useQuizStore.getState().reset(); router.push('/quiz/apps') }}
+              style={{
+                width: '100%', height: 46,
+                background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
+                borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#0F4C81',
+                cursor: 'pointer', backdropFilter: 'blur(12px)',
+                fontFamily: 'Plus Jakarta Sans, sans-serif',
+              }}
+            >
+              🔄 Re-run quiz →
+            </button>
+          )}
 
-        {/* Family plan disclaimer */}
-        <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontWeight: 500, marginTop: 4 }}>
-          Prices shown are full plan cost. If you share with family, your actual savings are even higher.
+          {/* Feedback card */}
+          <FeedbackCard sessionId={sessionId} />
         </div>
-
-        {/* Re-run button (returning users) */}
-        {isReturningUser && (
-          <button
-            onClick={() => { resetAnswers(); useQuizStore.getState().reset(); router.push('/quiz/apps') }}
-            style={{
-              width: '100%', height: 46,
-              background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
-              borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#0F4C81',
-              cursor: 'pointer', backdropFilter: 'blur(12px)',
-              fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: 8,
-            }}
-          >
-            🔄 Re-run quiz →
-          </button>
-        )}
-
-        {/* Feedback card */}
-        <FeedbackCard sessionId={sessionId} />
       </div>
 
       {/* Footer: Share + Copy */}
