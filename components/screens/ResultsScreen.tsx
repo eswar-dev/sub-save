@@ -355,6 +355,7 @@ function VerdictCard({ result, reminderPaid, onBell, onDisagree }: {
             width={46} height={46}
             style={{ borderRadius: 14, objectFit: 'contain', background: '#fff', padding: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', flexShrink: 0 }}
             onError={() => setImgError(true)}
+                            onLoad={(e) => { if ((e.currentTarget as HTMLImageElement).naturalWidth < 32) setImgError(true) }}
           />
         )}
 

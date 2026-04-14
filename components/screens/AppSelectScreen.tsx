@@ -362,6 +362,7 @@ function AppCell({ app, isSelected, isCapped, onTap }: {
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             }}
             onError={() => setImgError(true)}
+            onLoad={(e) => { if ((e.currentTarget as HTMLImageElement).naturalWidth < 32) setImgError(true) }}
           />
         )}
       </div>

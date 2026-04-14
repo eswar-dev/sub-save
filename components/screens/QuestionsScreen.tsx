@@ -199,6 +199,7 @@ export default function QuestionsScreen() {
                   boxShadow: '0 8px 28px rgba(15,76,129,0.12), inset 0 1px 0 rgba(255,255,255,0.8)',
                 }}
                 onError={() => setImgErrors((prev) => ({ ...prev, [currentCard.appId]: true }))}
+                onLoad={(e) => { if ((e.currentTarget as HTMLImageElement).naturalWidth < 32) setImgErrors((prev) => ({ ...prev, [currentCard.appId]: true })) }}
               />
             )}
           </div>
