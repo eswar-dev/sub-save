@@ -27,7 +27,7 @@
   --animate-pulse-dot:  pulse-dot 2s ease-in-out infinite;
   --animate-spin-ring:  spin-ring 0.9s linear infinite;
   --animate-pop:        counter-pop 0.28s cubic-bezier(0.34,1.56,0.64,1);
-  --animate-stagger-in: stagger-in 0.4s ease forwards;
+  --animate-stagger-in: stagger-in 0.22s ease forwards;
 }
 
 @keyframes pulse-dot {
@@ -43,7 +43,7 @@
   100% { transform: scale(1); }
 }
 @keyframes stagger-in {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeout {

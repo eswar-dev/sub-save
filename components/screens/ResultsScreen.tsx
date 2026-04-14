@@ -58,7 +58,8 @@ export default function ResultsScreen() {
   }
 
   async function handleShare() {
-    const text = `I just found out I could save ${formatINR(totalSavings)}/month on subscriptions! Check yours at subpaysaver.app 🔔\n\nMy audit: ${cancelResults.map((r) => `❌ ${r.name}`).join(', ')}`
+    const url = typeof window !== 'undefined' ? window.location.host : 'subpaysaver.app'
+    const text = `I just found out I could save ${formatINR(totalSavings)}/month on subscriptions! Check yours at ${url} 🔔\n\nMy audit: ${cancelResults.map((r) => `❌ ${r.name}`).join(', ')}`
     track('share_clicked', { method: 'native' })
     if (navigator.share) {
       try { await navigator.share({ text, title: 'SUB PAY SAVER — My Subscription Audit' }) } catch {}
@@ -87,30 +88,30 @@ export default function ResultsScreen() {
         borderBottom: '1px solid rgba(255,255,255,0.45)',
         zIndex: 10,
       }}>
-        {/* Title row — back button + title inline */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <button
-            onClick={() => router.push('/quiz/apps')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
-              background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.45)',
-              color: '#475569', fontSize: 12, fontWeight: 600,
-              padding: '6px 12px', borderRadius: 100, cursor: 'pointer',
-              backdropFilter: 'blur(10px)', fontFamily: 'Plus Jakarta Sans, sans-serif',
-            }}
-          >
-            ‹ Edit apps
-          </button>
+        {/* Back button on its own row */}
+        <button
+          onClick={() => router.push('/quiz/apps')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.45)',
+            color: '#475569', fontSize: 12, fontWeight: 600,
+            padding: '6px 12px', borderRadius: 100, cursor: 'pointer',
+            backdropFilter: 'blur(10px)', fontFamily: 'Plus Jakarta Sans, sans-serif',
+            marginBottom: 10,
+          }}
+        >
+          ‹ Edit apps
+        </button>
 
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {isReturningUser && lastAuditDate && (
-              <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, marginBottom: 2 }}>
-                Welcome back 👋 · Last audit: {formatDate(lastAuditDate)}
-              </div>
-            )}
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', letterSpacing: '-0.5px' }}>
-              Your Audit
+        {/* Title row */}
+        <div style={{ marginBottom: 10 }}>
+          {isReturningUser && lastAuditDate && (
+            <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, marginBottom: 2 }}>
+              Welcome back 👋 · Last audit: {formatDate(lastAuditDate)}
             </div>
+          )}
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', letterSpacing: '-0.5px' }}>
+            Your Audit
           </div>
         </div>
 
@@ -186,6 +187,9 @@ export default function ResultsScreen() {
             Prices shown are full plan cost. If you share with family, your actual savings are even higher.
           </div>
 
+          {/* Feedback card — placed after verdicts so user has context before rating */}
+          <FeedbackCard sessionId={sessionId} />
+
           {/* Re-run button (returning users) */}
           {isReturningUser && (
             <button
@@ -201,9 +205,6 @@ export default function ResultsScreen() {
               🔄 Re-run quiz →
             </button>
           )}
-
-          {/* Feedback card */}
-          <FeedbackCard sessionId={sessionId} />
         </div>
       </div>
 
@@ -388,7 +389,7 @@ function VerdictCard({ result, reminderPaid, onBell, onDisagree }: {
           }}
           title="Set reminder"
         >
-          {result.reminderConfig ? '🔔' : '🔔'}
+          {result.reminderConfig ? '🔔' : '🔕'}
         </button>
       </div>
     </div>

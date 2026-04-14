@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
       className="flex flex-col"
       style={{
         position: 'absolute', inset: 0,
-        padding: '52px 24px 40px',
+        padding: 'max(52px, calc(env(safe-area-inset-top, 0px) + 20px)) 24px max(40px, calc(env(safe-area-inset-bottom, 0px) + 20px))',
         background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)',
       }}
     >

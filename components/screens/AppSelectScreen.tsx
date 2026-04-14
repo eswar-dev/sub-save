@@ -301,25 +301,31 @@ function AppCell({ app, isSelected, isCapped, onTap }: {
         boxShadow: '0 2px 6px rgba(45,212,191,0.45)',
       }}>✓</div>
 
-      {/* Logo */}
-      {app.custom || imgError ? (
+      {/* Logo — colour tile renders instantly, image loads on top */}
+      <div style={{ position: 'relative', width: 42, height: 42, flexShrink: 0 }}>
         <div style={{
-          width: 42, height: 42, borderRadius: 12,
+          position: 'absolute', inset: 0, borderRadius: 12,
           background: hashColor(app.id),
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 17, fontWeight: 900, color: '#fff',
         }}>
           {app.name[0]}
         </div>
-      ) : (
-        <img
-          src={getLogoUrl(app.domain)}
-          alt={app.name}
-          width={42} height={42}
-          style={{ borderRadius: 12, objectFit: 'contain', background: '#fff', padding: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-          onError={() => setImgError(true)}
-        />
-      )}
+        {!app.custom && !imgError && (
+          <img
+            src={getLogoUrl(app.domain)}
+            alt={app.name}
+            width={42} height={42}
+            loading="lazy"
+            style={{
+              position: 'absolute', inset: 0, borderRadius: 12,
+              objectFit: 'contain', background: '#fff', padding: 4,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            }}
+            onError={() => setImgError(true)}
+          />
+        )}
+      </div>
 
       <div style={{ fontSize: 10, color: '#1e293b', textAlign: 'center', fontWeight: 700, lineHeight: 1.2 }}>{app.name}</div>
       <div style={{ fontSize: 10, color: '#475569', fontWeight: 500 }}>{priceText}</div>
