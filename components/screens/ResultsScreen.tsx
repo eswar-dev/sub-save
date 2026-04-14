@@ -198,19 +198,6 @@ export default function ResultsScreen() {
             Prices shown are full plan cost. If you share with family, your actual savings are even higher.
           </div>
 
-          {/* Start over — available for all users */}
-          <button
-            onClick={() => { useQuizStore.getState().reset(); router.push('/quiz') }}
-            style={{
-              width: '100%', height: 46,
-              background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
-              borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#0F4C81',
-              cursor: 'pointer', backdropFilter: 'blur(12px)',
-              fontFamily: 'Plus Jakarta Sans, sans-serif',
-            }}
-          >
-            🔄 Start over →
-          </button>
         </div>
       </div>
 
