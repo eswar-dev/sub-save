@@ -10,6 +10,7 @@ import { formatDate } from '@/lib/utils'
 import FeedbackCard from '@/components/ui/FeedbackCard'
 import ReminderGateSheet from '@/components/sheets/ReminderGateSheet'
 import ReminderConfigSheet from '@/components/sheets/ReminderConfigSheet'
+import SignInSheet from '@/components/sheets/SignInSheet'
 
 export default function ResultsScreen() {
   const router = useRouter()
@@ -17,11 +18,21 @@ export default function ResultsScreen() {
   const [gateApp, setGateApp] = useState<AppResult | null>(null)
   const [reminderApp, setReminderApp] = useState<AppResult | null>(null)
   const [disagreeApp, setDisagreeApp] = useState<AppResult | null>(null)
+  const [signinOpen, setSigninOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   const cancelResults = results.filter((r) => r.verdict === 'cancel')
   const reviewResults = results.filter((r) => r.verdict === 'review')
   const keepResults = results.filter((r) => r.verdict === 'keep')
   const totalSavings = cancelResults.reduce((s, r) => s + r.price, 0)
+
+  // Feedback modal — show after 12s if not already done
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (localStorage.getItem('sps_feedback_done') === '1') return
+    const t = setTimeout(() => setFeedbackOpen(true), 12000)
+    return () => clearTimeout(t)
+  }, [])
 
   // Save session to DB — once on mount
   useEffect(() => {
@@ -58,7 +69,8 @@ export default function ResultsScreen() {
   }
 
   async function handleShare() {
-    const text = `I just found out I could save ${formatINR(totalSavings)}/month on subscriptions! Check yours at subpaysaver.app 🔔\n\nMy audit: ${cancelResults.map((r) => `❌ ${r.name}`).join(', ')}`
+    const url = typeof window !== 'undefined' ? window.location.host : 'subpaysaver.app'
+    const text = `I just found out I could save ${formatINR(totalSavings)}/month on subscriptions! Check yours at ${url} 🔔\n\nMy audit: ${cancelResults.map((r) => `❌ ${r.name}`).join(', ')}`
     track('share_clicked', { method: 'native' })
     if (navigator.share) {
       try { await navigator.share({ text, title: 'SUB PAY SAVER — My Subscription Audit' }) } catch {}
@@ -77,7 +89,7 @@ export default function ResultsScreen() {
 
   return (
     <div
-      className="flex flex-col"
+      className="flex flex-col page-enter"
       style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)' }}
     >
       {/* Sticky header */}
@@ -87,30 +99,30 @@ export default function ResultsScreen() {
         borderBottom: '1px solid rgba(255,255,255,0.45)',
         zIndex: 10,
       }}>
-        {/* Title row — back button + title inline */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <button
-            onClick={() => router.push('/quiz/apps')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
-              background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.45)',
-              color: '#475569', fontSize: 12, fontWeight: 600,
-              padding: '6px 12px', borderRadius: 100, cursor: 'pointer',
-              backdropFilter: 'blur(10px)', fontFamily: 'Plus Jakarta Sans, sans-serif',
-            }}
-          >
-            ‹ Edit apps
-          </button>
+        {/* Back button on its own row */}
+        <button
+          onClick={() => router.push('/quiz/apps')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.45)',
+            color: '#475569', fontSize: 12, fontWeight: 600,
+            padding: '6px 12px', borderRadius: 100, cursor: 'pointer',
+            backdropFilter: 'blur(10px)', fontFamily: 'Plus Jakarta Sans, sans-serif',
+            marginBottom: 10,
+          }}
+        >
+          ‹ Edit apps
+        </button>
 
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {isReturningUser && lastAuditDate && (
-              <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, marginBottom: 2 }}>
-                Welcome back 👋 · Last audit: {formatDate(lastAuditDate)}
-              </div>
-            )}
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', letterSpacing: '-0.5px' }}>
-              Your Audit
+        {/* Title row */}
+        <div style={{ marginBottom: 10 }}>
+          {isReturningUser && lastAuditDate && (
+            <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, marginBottom: 2 }}>
+              Welcome back 👋 · Last audit: {formatDate(lastAuditDate)}
             </div>
+          )}
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', letterSpacing: '-0.5px' }}>
+            Your Audit
           </div>
         </div>
 
@@ -186,24 +198,19 @@ export default function ResultsScreen() {
             Prices shown are full plan cost. If you share with family, your actual savings are even higher.
           </div>
 
-          {/* Re-run button (returning users) */}
-          {isReturningUser && (
-            <button
-              onClick={() => { resetAnswers(); useQuizStore.getState().reset(); router.push('/quiz/apps') }}
-              style={{
-                width: '100%', height: 46,
-                background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
-                borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#0F4C81',
-                cursor: 'pointer', backdropFilter: 'blur(12px)',
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-              }}
-            >
-              🔄 Re-run quiz →
-            </button>
-          )}
-
-          {/* Feedback card */}
-          <FeedbackCard sessionId={sessionId} />
+          {/* Start over — available for all users */}
+          <button
+            onClick={() => { useQuizStore.getState().reset(); router.push('/quiz') }}
+            style={{
+              width: '100%', height: 46,
+              background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
+              borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#0F4C81',
+              cursor: 'pointer', backdropFilter: 'blur(12px)',
+              fontFamily: 'Plus Jakarta Sans, sans-serif',
+            }}
+          >
+            🔄 Start over →
+          </button>
         </div>
       </div>
 
@@ -225,8 +232,12 @@ export default function ResultsScreen() {
           app={gateApp}
           onClose={() => setGateApp(null)}
           onSuccess={() => { setGateApp(null); setReminderApp(gateApp) }}
+          onSignIn={() => setSigninOpen(true)}
         />
       )}
+
+      {/* Sign-in sheet (from gate link) */}
+      <SignInSheet open={signinOpen} onClose={() => setSigninOpen(false)} />
 
       {/* Reminder config */}
       {reminderApp && (
@@ -240,6 +251,14 @@ export default function ResultsScreen() {
       {disagreeApp && (
         <DisagreeSheet app={disagreeApp} onClose={() => setDisagreeApp(null)} />
       )}
+
+      {/* Feedback modal — timed popup */}
+      <FeedbackCard
+        sessionId={sessionId}
+        asModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+      />
     </div>
   )
 }
@@ -388,7 +407,7 @@ function VerdictCard({ result, reminderPaid, onBell, onDisagree }: {
           }}
           title="Set reminder"
         >
-          {result.reminderConfig ? '🔔' : '🔔'}
+          {result.reminderConfig ? '🔔' : '🔕'}
         </button>
       </div>
     </div>

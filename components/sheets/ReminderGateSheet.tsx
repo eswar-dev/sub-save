@@ -10,12 +10,13 @@ interface Props {
   app: AppResult
   onClose: () => void
   onSuccess: () => void
+  onSignIn?: () => void
 }
 
 const verdictColors: Record<string, string> = { cancel: '#dc2626', review: '#d97706', keep: '#0d9488' }
 const verdictLabels: Record<string, string> = { cancel: 'CANCEL', review: 'REVIEW', keep: 'KEEP' }
 
-export default function ReminderGateSheet({ app, onClose, onSuccess }: Props) {
+export default function ReminderGateSheet({ app, onClose, onSuccess, onSignIn }: Props) {
   const { setReminderPaid, sessionId } = useQuizStore()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -170,7 +171,10 @@ export default function ReminderGateSheet({ app, onClose, onSuccess }: Props) {
 
             <div style={{ textAlign: 'center', marginTop: 10, fontSize: 13, color: '#475569', fontWeight: 500 }}>
               Already saved?{' '}
-              <button onClick={onClose} style={{ color: '#0F4C81', fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13 }}>
+              <button
+                onClick={() => { onClose(); onSignIn?.() }}
+                style={{ color: '#0F4C81', fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13 }}
+              >
                 Sign in →
               </button>
             </div>

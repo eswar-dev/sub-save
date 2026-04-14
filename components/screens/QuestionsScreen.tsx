@@ -63,6 +63,7 @@ export default function QuestionsScreen() {
     }
 
     // Skip Q2 if "Can't remember" was answered on Q1
+    // Do NOT recurse — nextIdx+1 is always a Q1 card (fresh app), no further skipping needed
     const nextCard = c[nextIdx]
     if (nextCard?.questionNum === 2) {
       const q1Answer = useQuizStore.getState().answers[`${nextCard.appId}-q1`]
@@ -70,7 +71,6 @@ export default function QuestionsScreen() {
         useQuizStore.getState().setAnswer(`${nextCard.appId}-q2`, 'Rarely')
         useQuizStore.setState({ cardIndex: nextIdx + 1 })
         isAnimating.current = false
-        advanceCard()
         return
       }
     }
@@ -84,7 +84,7 @@ export default function QuestionsScreen() {
     const key = `${currentCard.appId}-q${currentCard.questionNum}`
     setAnswer(key, value)
     track('question_answered', { app_id: currentCard.appId, question: `q${currentCard.questionNum}`, value })
-    setTimeout(advanceCard, 170)
+    setTimeout(advanceCard, 110)
   }
 
   // Swipe-down to undo (touch only)
@@ -121,6 +121,7 @@ export default function QuestionsScreen() {
 
   return (
     <div
+      className="page-enter"
       style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -176,9 +177,10 @@ export default function QuestionsScreen() {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '104px 24px 40px' }}>
         {/* App block */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 28 }}>
-          {isCustom || imgErrors[currentCard.appId] ? (
+          {/* Colour tile always visible instantly; image fades in on top once loaded */}
+          <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 20,
+              position: 'absolute', inset: 0, borderRadius: 20,
               background: hashColor(currentCard.appId),
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 26, fontWeight: 900, color: '#fff',
@@ -186,15 +188,20 @@ export default function QuestionsScreen() {
             }}>
               {currentCard.appName[0]}
             </div>
-          ) : (
-            <img
-              src={logoUrl}
-              alt={currentCard.appName}
-              width={64} height={64}
-              style={{ borderRadius: 20, objectFit: 'contain', background: '#fff', padding: 6, boxShadow: '0 8px 28px rgba(15,76,129,0.12), inset 0 1px 0 rgba(255,255,255,0.8)' }}
-              onError={() => setImgErrors((prev) => ({ ...prev, [currentCard.appId]: true }))}
-            />
-          )}
+            {!isCustom && !imgErrors[currentCard.appId] && (
+              <img
+                src={logoUrl}
+                alt={currentCard.appName}
+                width={64} height={64}
+                style={{
+                  position: 'absolute', inset: 0, borderRadius: 20,
+                  objectFit: 'contain', background: '#fff', padding: 6,
+                  boxShadow: '0 8px 28px rgba(15,76,129,0.12), inset 0 1px 0 rgba(255,255,255,0.8)',
+                }}
+                onError={() => setImgErrors((prev) => ({ ...prev, [currentCard.appId]: true }))}
+              />
+            )}
+          </div>
           <div style={{ fontSize: 11, color: '#475569', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {currentCard.appName}
           </div>
@@ -206,6 +213,12 @@ export default function QuestionsScreen() {
           </div>
         </div>
 
+        {/* Question + options — key+animation gives game-card-flip feel on each new card */}
+        <div
+          key={`${currentCard.appId}-q${currentCard.questionNum}`}
+          style={{ animation: 'stagger-in 0.2s ease forwards', display: 'contents' }}
+        >
+
         {/* Question */}
         <div style={{
           fontSize: 25, fontWeight: 800, color: '#1e293b',
@@ -213,7 +226,7 @@ export default function QuestionsScreen() {
         }}>
           {currentCard.questionNum === 1
             ? `When did you last use ${currentCard.appName}?`
-            : `How often do you actually use ${currentCard.appName}?`}
+            : `How often do you use ${currentCard.appName}?`}
         </div>
 
         {/* Answer options */}
@@ -246,6 +259,8 @@ export default function QuestionsScreen() {
             ↓ Swipe to undo
           </div>
         )}
+
+        </div>{/* end animated wrapper */}
       </div>
     </div>
   )
