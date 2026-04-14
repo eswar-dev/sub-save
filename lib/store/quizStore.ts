@@ -4,8 +4,6 @@ import { create } from 'zustand'
 import { App } from '@/lib/data/apps'
 import { AppResult, Q1Answer, Q2Answer, scoreApp } from '@/lib/scoring'
 
-export type Screen = 'welcome' | 'app-select' | 'questions' | 'calculating' | 'results'
-
 export interface SelectedApp extends App {
   selectedPrice: number
 }
@@ -21,12 +19,6 @@ export interface QuestionCard {
 }
 
 export interface QuizStore {
-  // ── NAVIGATION ──
-  activeScreen: Screen
-  navigateTo: (screen: Screen) => void
-  navigateBack: () => void
-  previousScreen: Screen | null
-
   // ── APP SELECT ──
   selected: Record<string, SelectedApp>
   totalSpend: number
@@ -71,23 +63,7 @@ export function getLocalSessionId(): string {
   return id
 }
 
-const SCREEN_HISTORY: Screen[] = []
-
 export const useQuizStore = create<QuizStore>((set, get) => ({
-  // ── NAVIGATION ──
-  activeScreen: 'welcome',
-  previousScreen: null,
-
-  navigateTo: (screen) => {
-    SCREEN_HISTORY.push(get().activeScreen)
-    set({ activeScreen: screen, previousScreen: get().activeScreen })
-  },
-
-  navigateBack: () => {
-    const prev = SCREEN_HISTORY.pop() ?? 'welcome'
-    set({ activeScreen: prev, previousScreen: null })
-  },
-
   // ── APP SELECT ──
   selected: {},
   totalSpend: 0,
@@ -166,7 +142,6 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
         q2,
       )
     })
-    // Sort: cancel first, then review, then keep
     results.sort((a, b) => {
       const order = { cancel: 0, review: 1, keep: 2 }
       return order[a.verdict] - order[b.verdict]
@@ -185,18 +160,15 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   },
 
   setReturningUser: (email, results, auditDate) => {
-    set({ userEmail: email, results, lastAuditDate: auditDate, isReturningUser: true, activeScreen: 'results' })
+    set({ userEmail: email, results, lastAuditDate: auditDate, isReturningUser: true })
   },
 
   startQuizWithEmail: (email) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('sps_email', email)
     }
-    SCREEN_HISTORY.length = 0
     set({
       userEmail: email,
-      activeScreen: 'app-select',
-      previousScreen: 'welcome',
       selected: {},
       totalSpend: 0,
       answers: {},
@@ -218,13 +190,10 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   // ── FULL RESET ──
   reset: () => {
     if (typeof window !== 'undefined') {
-      // Generate new session ID on reset
       const newId = `sps_${Date.now()}_${Math.random().toString(36).slice(2)}`
       localStorage.setItem('sps_session_id', newId)
     }
     set({
-      activeScreen: 'welcome',
-      previousScreen: null,
       selected: {},
       totalSpend: 0,
       answers: {},
@@ -235,6 +204,5 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       isReturningUser: false,
       lastAuditDate: null,
     })
-    SCREEN_HISTORY.length = 0
   },
 }))

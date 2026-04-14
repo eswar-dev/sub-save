@@ -1,26 +1,171 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ─── DESIGN TOKENS (Tailwind v4 CSS theming) ─── */
+@theme {
+  --color-primary:   #0F4C81;
+  --color-mint:      #2DD4BF;
+  --color-pri-c:     #d0e4ff;
+  --color-mint-c:    #ccfbf1;
+  --color-surface:   #f8fafc;
+  --color-text-base: #1e293b;
+  --color-muted:     #475569;
+  --color-faint:     #94a3b8;
+  --color-err:       #dc2626;
+  --color-warn:      #d97706;
+  --color-ok:        #0d9488;
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+
+  --radius-phone: 54px;
+
+  --shadow-phone:  0 0 0 1px rgba(255,255,255,0.7), 0 0 0 10px rgba(255,255,255,0.18), 0 0 0 11px rgba(15,76,129,0.07), 0 60px 120px rgba(15,76,129,0.22), inset 0 1px 0 rgba(255,255,255,0.9);
+  --shadow-glass:  0 4px 20px rgba(15,76,129,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+  --shadow-btn:    0 8px 24px rgba(15,76,129,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
+  --shadow-card:   0 4px 24px rgba(15,76,129,0.08), inset 0 1px 0 rgba(255,255,255,0.7);
+  --shadow-sheet:  0 -12px 40px rgba(15,76,129,0.1);
+
+  --animate-pulse-dot:  pulse-dot 2s ease-in-out infinite;
+  --animate-spin-ring:  spin-ring 0.9s linear infinite;
+  --animate-pop:        counter-pop 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  --animate-stagger-in: stagger-in 0.4s ease forwards;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(0.75); }
+}
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
+}
+@keyframes counter-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+@keyframes stagger-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeout {
+  to { opacity: 0; pointer-events: none; }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── GLOBAL RESET ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+html, body {
+  height: 100%;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  background: linear-gradient(150deg, #dbeafe 0%, #e8f4fd 45%, #d4f6ef 100%);
+  background-attachment: fixed;
 }
+
+/* ─── SCROLLBAR HIDE ─── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── SCREEN TRANSITIONS ─── */
+.screen {
+  position: absolute;
+  inset: 0;
+  transform: translateX(105%);
+  transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.screen.active    { transform: translateX(0); }
+.screen.exit-left { transform: translateX(-28%); }
+
+/* ─── GLASS SURFACE ─── */
+.glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: var(--shadow-glass);
+}
+
+/* ─── BOTTOM SHEET ─── */
+.b-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-radius: 28px 28px 0 0;
+  padding: 10px 20px 42px;
+  transform: translateY(105%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 201;
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--shadow-sheet);
+}
+.b-sheet.open { transform: translateY(0); }
+
+.b-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 76, 129, 0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s;
+  z-index: 200;
+}
+.b-overlay.open { opacity: 1; pointer-events: all; }
+
+/* ─── GRADIENT TEXT ─── */
+.gradient-text {
+  background: linear-gradient(135deg, #0F4C81 0%, #2DD4BF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── ANSWER OPTION TINTS ─── */
+.q-opt-this-week       { background: rgba(45,212,191,0.22) !important; border-color: rgba(45,212,191,0.38) !important; }
+.q-opt-this-month      { background: rgba(45,212,191,0.12) !important; border-color: rgba(45,212,191,0.22) !important; }
+.q-opt-over-month      { background: rgba(15,76,129,0.09)  !important; border-color: rgba(15,76,129,0.18)  !important; }
+.q-opt-cant-remember   { background: rgba(15,76,129,0.16)  !important; border-color: rgba(15,76,129,0.30)  !important; }
+.q-opt-daily           { background: rgba(45,212,191,0.22) !important; border-color: rgba(45,212,191,0.38) !important; }
+.q-opt-few-times-week  { background: rgba(45,212,191,0.14) !important; border-color: rgba(45,212,191,0.25) !important; }
+.q-opt-weekly          { background: rgba(45,212,191,0.07) !important; border-color: rgba(15,76,129,0.14)  !important; }
+.q-opt-few-times-month { background: rgba(15,76,129,0.09)  !important; border-color: rgba(15,76,129,0.18)  !important; }
+.q-opt-rarely          { background: rgba(15,76,129,0.16)  !important; border-color: rgba(15,76,129,0.30)  !important; }
+
+/* ─── VERDICT CARD COLORS ─── */
+.verdict-cancel { background: rgba(254,226,226,0.72); border-color: rgba(239,68,68,0.18); }
+.verdict-review { background: rgba(254,243,199,0.72); border-color: rgba(245,158,11,0.18); }
+.verdict-keep   { background: rgba(204,251,241,0.72); border-color: rgba(45,212,191,0.28); }
+.verdict-bar-cancel { background: #dc2626; }
+.verdict-bar-review { background: #d97706; }
+.verdict-bar-keep   { background: #2DD4BF; }
+
+/* ─── SWIPE HINT FADE ─── */
+.swipe-fade { animation: fadeout 1s ease 3s forwards; }
+
+/* ─── INPUT STYLE ─── */
+.gate-input {
+  width: 100%;
+  height: 50px;
+  background: rgba(255,255,255,0.7);
+  border: 1.5px solid rgba(15,76,129,0.15);
+  border-radius: 14px;
+  padding: 0 16px;
+  font-size: 15px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.gate-input:focus {
+  border-color: rgba(15,76,129,0.4);
+  box-shadow: 0 0 0 3px rgba(15,76,129,0.08);
+}
+.gate-input::placeholder { color: #94a3b8; }

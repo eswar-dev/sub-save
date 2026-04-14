@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuizStore, getLocalSessionId } from '@/lib/store/quizStore'
 import { AppResult } from '@/lib/scoring'
 import { getLogoUrl, hashColor, formatINR } from '@/lib/data/apps'
@@ -11,8 +12,8 @@ import ReminderGateSheet from '@/components/sheets/ReminderGateSheet'
 import ReminderConfigSheet from '@/components/sheets/ReminderConfigSheet'
 
 export default function ResultsScreen() {
-  const { results, totalSpend, navigateTo, navigateBack, sessionId, reminderPaid, userEmail, lastAuditDate, isReturningUser, reset, resetAnswers, selected, activeScreen } = useQuizStore()
-  const animEpoch = useRef(0)
+  const router = useRouter()
+  const { results, totalSpend, sessionId, reminderPaid, userEmail, lastAuditDate, isReturningUser, reset, resetAnswers } = useQuizStore()
   const [gateApp, setGateApp] = useState<AppResult | null>(null)
   const [reminderApp, setReminderApp] = useState<AppResult | null>(null)
   const [disagreeApp, setDisagreeApp] = useState<AppResult | null>(null)
@@ -22,16 +23,9 @@ export default function ResultsScreen() {
   const keepResults = results.filter((r) => r.verdict === 'keep')
   const totalSavings = cancelResults.reduce((s, r) => s + r.price, 0)
 
-  // Bump epoch when results screen becomes active — forces CSS animation to replay
+  // Save session to DB — once on mount
   useEffect(() => {
-    if (activeScreen === 'results' && results.length > 0) {
-      animEpoch.current += 1
-    }
-  }, [activeScreen, results])
-
-  // Save session to DB — only once when results screen becomes active
-  useEffect(() => {
-    if (activeScreen !== 'results' || results.length === 0 || sessionId) return
+    if (results.length === 0 || sessionId) return
     fetch('/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -46,7 +40,8 @@ export default function ResultsScreen() {
       .then((r) => r.json())
       .then((data) => { if (data.id) useQuizStore.getState().setSession(data.id) })
       .catch(() => {})
-  }, [activeScreen, results, sessionId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Category overlap detection
   const catCounts: Record<string, number> = {}
@@ -82,9 +77,8 @@ export default function ResultsScreen() {
 
   return (
     <div
-      className="screen flex flex-col"
-      id="screen-results"
-      style={{ background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)' }}
+      className="flex flex-col"
+      style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)' }}
     >
       {/* Sticky header */}
       <div style={{
@@ -96,7 +90,7 @@ export default function ResultsScreen() {
         {/* Title row — back button + title inline */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <button
-            onClick={() => navigateBack()}
+            onClick={() => router.push('/quiz/apps')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
               background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.45)',
@@ -176,11 +170,10 @@ export default function ResultsScreen() {
         )}
 
         {/* Verdict cards */}
-        {results.map((result, i) => (
+        {results.map((result) => (
           <VerdictCard
-            key={`${result.id}-${animEpoch.current}`}
+            key={result.id}
             result={result}
-            animDelay={200 + i * 120}
             reminderPaid={reminderPaid}
             onBell={() => handleBellTap(result)}
             onDisagree={() => setDisagreeApp(result)}
@@ -195,7 +188,7 @@ export default function ResultsScreen() {
         {/* Re-run button (returning users) */}
         {isReturningUser && (
           <button
-            onClick={() => { resetAnswers(); useQuizStore.getState().reset(); navigateTo('app-select') }}
+            onClick={() => { resetAnswers(); useQuizStore.getState().reset(); router.push('/quiz/apps') }}
             style={{
               width: '100%', height: 46,
               background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
@@ -268,9 +261,8 @@ function Chip({ label, color, bg }: { label: string; color: string; bg: string }
   )
 }
 
-function VerdictCard({ result, animDelay, reminderPaid, onBell, onDisagree }: {
+function VerdictCard({ result, reminderPaid, onBell, onDisagree }: {
   result: AppResult
-  animDelay: number
   reminderPaid: boolean
   onBell: () => void
   onDisagree: () => void
@@ -285,6 +277,21 @@ function VerdictCard({ result, animDelay, reminderPaid, onBell, onDisagree }: {
     review: 'rgba(245,158,11,0.14)',
     keep: 'rgba(45,212,191,0.18)',
   }
+  const cardBg: Record<string, string> = {
+    cancel: 'rgba(254,226,226,0.72)',
+    review: 'rgba(254,243,199,0.72)',
+    keep: 'rgba(204,251,241,0.72)',
+  }
+  const cardBorder: Record<string, string> = {
+    cancel: 'rgba(239,68,68,0.18)',
+    review: 'rgba(245,158,11,0.18)',
+    keep: 'rgba(45,212,191,0.28)',
+  }
+  const barBg: Record<string, string> = {
+    cancel: '#dc2626',
+    review: '#d97706',
+    keep: '#2DD4BF',
+  }
 
   function handleThumb(type: 'up' | 'down') {
     setThumbed(type)
@@ -295,16 +302,16 @@ function VerdictCard({ result, animDelay, reminderPaid, onBell, onDisagree }: {
   return (
     <div
       style={{
-        animation: `stagger-in 0.4s ease ${animDelay}ms both`,
         borderRadius: 20, overflow: 'hidden', position: 'relative',
-        border: '1.5px solid',
+        border: `1.5px solid ${cardBorder[result.verdict]}`,
+        background: cardBg[result.verdict],
       }}
-      className={`verdict-${result.verdict}`}
     >
       {/* Colored left bar */}
       <div style={{
         position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
-      }} className={`verdict-bar-${result.verdict}`} />
+        background: barBg[result.verdict],
+      }} />
 
       <div style={{
         display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px 12px 18px',

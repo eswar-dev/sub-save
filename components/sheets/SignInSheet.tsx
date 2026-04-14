@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuizStore } from '@/lib/store/quizStore'
 import { AppResult } from '@/lib/scoring'
 import { track } from '@/lib/analytics'
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function SignInSheet({ open, onClose }: Props) {
+  const router = useRouter()
   const { setReturningUser, startQuizWithEmail } = useQuizStore()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,6 +42,7 @@ export default function SignInSheet({ open, onClose }: Props) {
         track('signin_new_user')
         startQuizWithEmail(email)
         onClose()
+        router.push('/quiz/apps')
         return
       }
 
@@ -49,6 +52,7 @@ export default function SignInSheet({ open, onClose }: Props) {
       setTimeout(() => {
         setReturningUser(email, data.session.apps_selected as AppResult[], data.session.created_at)
         onClose()
+        router.push('/quiz/results')
       }, 1200)
     } catch {
       setError('Something went wrong. Please try again.')
