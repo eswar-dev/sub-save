@@ -19,11 +19,20 @@ export default function ResultsScreen() {
   const [reminderApp, setReminderApp] = useState<AppResult | null>(null)
   const [disagreeApp, setDisagreeApp] = useState<AppResult | null>(null)
   const [signinOpen, setSigninOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   const cancelResults = results.filter((r) => r.verdict === 'cancel')
   const reviewResults = results.filter((r) => r.verdict === 'review')
   const keepResults = results.filter((r) => r.verdict === 'keep')
   const totalSavings = cancelResults.reduce((s, r) => s + r.price, 0)
+
+  // Feedback modal — show after 12s if not already done
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (localStorage.getItem('sps_feedback_done') === '1') return
+    const t = setTimeout(() => setFeedbackOpen(true), 12000)
+    return () => clearTimeout(t)
+  }, [])
 
   // Save session to DB — once on mount
   useEffect(() => {
@@ -80,7 +89,7 @@ export default function ResultsScreen() {
 
   return (
     <div
-      className="flex flex-col"
+      className="flex flex-col page-enter"
       style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)' }}
     >
       {/* Sticky header */}
@@ -189,24 +198,19 @@ export default function ResultsScreen() {
             Prices shown are full plan cost. If you share with family, your actual savings are even higher.
           </div>
 
-          {/* Feedback card — placed after verdicts so user has context before rating */}
-          <FeedbackCard sessionId={sessionId} />
-
-          {/* Re-run button (returning users) */}
-          {isReturningUser && (
-            <button
-              onClick={() => { resetAnswers(); useQuizStore.getState().reset(); router.push('/quiz/apps') }}
-              style={{
-                width: '100%', height: 46,
-                background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
-                borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#0F4C81',
-                cursor: 'pointer', backdropFilter: 'blur(12px)',
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-              }}
-            >
-              🔄 Re-run quiz →
-            </button>
-          )}
+          {/* Start over — available for all users */}
+          <button
+            onClick={() => { useQuizStore.getState().reset(); router.push('/quiz') }}
+            style={{
+              width: '100%', height: 46,
+              background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(15,76,129,0.15)',
+              borderRadius: 100, fontSize: 14, fontWeight: 700, color: '#0F4C81',
+              cursor: 'pointer', backdropFilter: 'blur(12px)',
+              fontFamily: 'Plus Jakarta Sans, sans-serif',
+            }}
+          >
+            🔄 Start over →
+          </button>
         </div>
       </div>
 
@@ -247,6 +251,14 @@ export default function ResultsScreen() {
       {disagreeApp && (
         <DisagreeSheet app={disagreeApp} onClose={() => setDisagreeApp(null)} />
       )}
+
+      {/* Feedback modal — timed popup */}
+      <FeedbackCard
+        sessionId={sessionId}
+        asModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+      />
     </div>
   )
 }

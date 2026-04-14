@@ -108,7 +108,7 @@ export default function AppSelectScreen() {
   const counterHot = totalSpend >= 500
 
   return (
-    <div className="flex flex-col"
+    <div className="flex flex-col page-enter"
       style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)' }}
     >
       {/* Sticky header */}

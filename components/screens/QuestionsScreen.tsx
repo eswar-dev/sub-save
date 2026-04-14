@@ -121,6 +121,7 @@ export default function QuestionsScreen() {
 
   return (
     <div
+      className="page-enter"
       style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

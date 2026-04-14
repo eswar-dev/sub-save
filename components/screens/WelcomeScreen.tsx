@@ -4,19 +4,25 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { track } from '@/lib/analytics'
 import SignInSheet from '@/components/sheets/SignInSheet'
+import BetaGateSheet, { isBetaVerified } from '@/components/sheets/BetaGateSheet'
 
 export default function WelcomeScreen() {
   const router = useRouter()
   const [signinOpen, setSigninOpen] = useState(false)
+  const [betaOpen, setBetaOpen] = useState(false)
 
   function handleStart() {
     track('quiz_started')
-    router.push('/quiz/apps')
+    if (isBetaVerified()) {
+      router.push('/quiz/apps')
+    } else {
+      setBetaOpen(true)
+    }
   }
 
   return (
     <div
-      className="flex flex-col"
+      className="flex flex-col page-enter"
       style={{
         position: 'absolute', inset: 0,
         padding: 'max(52px, calc(env(safe-area-inset-top, 0px) + 20px)) 24px max(40px, calc(env(safe-area-inset-bottom, 0px) + 20px))',
@@ -138,7 +144,7 @@ export default function WelcomeScreen() {
           onTouchStart={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.96)' }}
           onTouchEnd={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
         >
-          Show me my waste
+          Check what I&apos;m overpaying →
         </button>
 
         <p style={{ textAlign: 'center', fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>
@@ -159,6 +165,9 @@ export default function WelcomeScreen() {
 
       {/* Sign-in sheet */}
       <SignInSheet open={signinOpen} onClose={() => setSigninOpen(false)} />
+
+      {/* Beta gate sheet */}
+      <BetaGateSheet open={betaOpen} onClose={() => setBetaOpen(false)} />
     </div>
   )
 }
