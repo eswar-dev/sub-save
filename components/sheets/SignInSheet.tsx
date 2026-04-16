@@ -13,7 +13,7 @@ interface Props {
 
 export default function SignInSheet({ open, onClose }: Props) {
   const router = useRouter()
-  const { setReturningUser, startQuizWithEmail } = useQuizStore()
+  const { setReturningUser, startQuizWithEmail, setSession } = useQuizStore()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -51,6 +51,7 @@ export default function SignInSheet({ open, onClose }: Props) {
       if (typeof window !== 'undefined') localStorage.setItem('sps_email', email)
       setTimeout(() => {
         setReturningUser(email, data.session.apps_selected as AppResult[], data.session.created_at)
+        setSession(data.session.id)
         onClose()
         router.push('/quiz/results')
       }, 1200)
