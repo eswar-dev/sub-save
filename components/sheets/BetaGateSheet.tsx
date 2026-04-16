@@ -147,7 +147,7 @@ export default function BetaGateSheet({ open, onClose }: Props) {
             <div style={{ textAlign: 'center', marginTop: 14, fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>
               Don&apos;t have a code?{' '}
               <a
-                href="mailto:hello@subpaysaver.app"
+                href="mailto:hello@subsmart.app"
                 style={{ color: '#0F4C81', fontWeight: 600, textDecoration: 'none' }}
               >
                 Request an invite →

@@ -1,8 +1,8 @@
--- SUB PAY SAVER — Supabase Schema
+-- SubSmart — Supabase Schema
 -- Run this in Supabase SQL Editor to set up the database
 
 -- ─── SESSIONS TABLE ───────────────────────────────────────────────
--- One row per quiz run. The "user record" for SUB PAY SAVER.
+-- One row per quiz run. The "user record" for SubSmart.
 CREATE TABLE IF NOT EXISTS sessions (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id       TEXT NOT NULL,          -- anonymous localStorage ID (format: sps_<ts>_<rand>)

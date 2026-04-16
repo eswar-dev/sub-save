@@ -48,7 +48,7 @@ export default function ReminderGateSheet({ app, onClose, onSuccess, onSignIn }:
         amount,
         currency,
         order_id,
-        name: 'SUB PAY SAVER',
+        name: 'SubSmart',
         description: 'Lifetime reminder access',
         prefill: { email },
         theme: { color: '#0F4C81' },

@@ -69,18 +69,18 @@ export default function ResultsScreen() {
   }
 
   async function handleShare() {
-    const url = typeof window !== 'undefined' ? window.location.host : 'subpaysaver.app'
-    const text = `I just found out I could save ${formatINR(totalSavings)}/month on subscriptions! Check yours at ${url} 🔔\n\nMy audit: ${cancelResults.map((r) => `❌ ${r.name}`).join(', ')}`
+    const url = typeof window !== 'undefined' ? window.location.host : 'subsmart.app'
+    const text = `I just found out I could save ${formatINR(totalSavings)}/month on subscriptions! Check yours at ${url} 🔔\n\nMy SubSmart audit: ${cancelResults.map((r) => `❌ ${r.name}`).join(', ')}`
     track('share_clicked', { method: 'native' })
     if (navigator.share) {
-      try { await navigator.share({ text, title: 'SUB PAY SAVER — My Subscription Audit' }) } catch {}
+      try { await navigator.share({ text, title: 'SubSmart — My Subscription Audit' }) } catch {}
     } else {
       handleCopy()
     }
   }
 
   function handleCopy() {
-    const text = `My SUB PAY SAVER audit:\n${results.map((r) => `${r.verdict === 'cancel' ? '❌' : r.verdict === 'review' ? '⚠️' : '✅'} ${r.name} — ₹${r.price}/mo`).join('\n')}\n\nCould save: ${formatINR(totalSavings)}/month`
+    const text = `My SubSmart audit:\n${results.map((r) => `${r.verdict === 'cancel' ? '❌' : r.verdict === 'review' ? '⚠️' : '✅'} ${r.name} — ₹${r.price}/mo`).join('\n')}\n\nCould save: ${formatINR(totalSavings)}/month`
     navigator.clipboard?.writeText(text).catch(() => {})
     track('share_clicked', { method: 'copy' })
   }

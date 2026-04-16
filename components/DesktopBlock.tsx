@@ -33,7 +33,7 @@ export default function DesktopBlock({ children }: { children: React.ReactNode }
           Built for phones &amp; tablets
         </div>
         <div style={{ fontSize: 15, color: '#475569', fontWeight: 500, maxWidth: 380, lineHeight: 1.7 }}>
-          SUB PAY SAVER is designed for mobile. Open this link on your phone or tablet to get started.
+          SubSmart is designed for mobile. Open this link on your phone or tablet to get started.
         </div>
         <div style={{
           marginTop: 28, fontSize: 14, fontWeight: 700,
@@ -42,7 +42,7 @@ export default function DesktopBlock({ children }: { children: React.ReactNode }
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
         }}>
-          subpaysaver.app
+          subsmart.app
         </div>
       </div>
     )

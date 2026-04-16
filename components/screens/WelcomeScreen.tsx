@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
           animation: 'pulse-dot 2s ease-in-out infinite',
           display: 'inline-block',
         }} />
-        SUB PAY SAVER
+        SubSmart
       </div>
 
       {/* Body */}

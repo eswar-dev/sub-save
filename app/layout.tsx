@@ -4,10 +4,10 @@ import DesktopBlock from '@/components/DesktopBlock'
 import PostHogProvider from '@/providers/PostHogProvider'
 
 export const metadata: Metadata = {
-  title: 'SUB PAY SAVER — Find which subscriptions to cancel',
+  title: 'SubSmart — Find which subscriptions to cancel',
   description: 'A 90-second quiz that tells you exactly which subscriptions to cancel and why. No login. No bank access.',
   openGraph: {
-    title: 'SUB PAY SAVER',
+    title: 'SubSmart',
     description: 'Find out which subscriptions you should cancel — in 90 seconds.',
     type: 'website',
   },
