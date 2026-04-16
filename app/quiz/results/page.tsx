@@ -1,5 +1,10 @@
+'use client'
+
+import { useQuizStore } from '@/lib/store/quizStore'
 import ResultsScreen from '@/components/screens/ResultsScreen'
+import DashboardScreen from '@/components/screens/DashboardScreen'
 
 export default function ResultsPage() {
-  return <ResultsScreen />
+  const { isReturningUser } = useQuizStore()
+  return isReturningUser ? <DashboardScreen /> : <ResultsScreen />
 }

@@ -1,9 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useQuizStore } from '@/lib/store/quizStore'
-import { AppResult } from '@/lib/scoring'
+import { useQuizStore, getLocalSessionId } from '@/lib/store/quizStore'
 import { track } from '@/lib/analytics'
 
 interface Props {
@@ -13,9 +11,8 @@ interface Props {
 
 type Step = 'email' | 'otp' | 'success'
 
-export default function SignInSheet({ open, onClose }: Props) {
-  const router = useRouter()
-  const { setReturningUser, setSession, startQuizWithEmail } = useQuizStore()
+export default function SaveSheet({ open, onClose }: Props) {
+  const { setReminderPaid } = useQuizStore()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -25,7 +22,6 @@ export default function SignInSheet({ open, onClose }: Props) {
   async function handleSendOTP() {
     if (!email.includes('@') || loading) return
     setLoading(true); setError('')
-    track('signin_attempted')
     try {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -33,7 +29,7 @@ export default function SignInSheet({ open, onClose }: Props) {
       })
       if (!res.ok) throw new Error()
       setStep('otp')
-      track('otp_sent', { source: 'sign_in' })
+      track('otp_sent', { source: 'save_sheet' })
     } catch { setError('Could not send code. Try again.') }
     setLoading(false)
   }
@@ -44,46 +40,33 @@ export default function SignInSheet({ open, onClose }: Props) {
     try {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email, code, local_session_id: getLocalSessionId() }),
       })
       const data = await res.json()
       if (!res.ok || !data.ok) { setError(data.error === 'Code expired' ? 'Code expired — go back and resend.' : 'Wrong code. Try again.'); setLoading(false); return }
-
-      if (typeof window !== 'undefined') localStorage.setItem('sps_email', email)
-
-      if (!data.session) {
-        track('signin_new_user')
-        startQuizWithEmail(email)
-        onClose()
-        router.push('/quiz/apps')
-        return
-      }
-
-      track('signin_returning')
+      setReminderPaid(email)
+      track('email_captured', { source: 'save_sheet' })
       setStep('success')
-      setTimeout(() => {
-        setReturningUser(email, data.session.apps_selected as AppResult[], data.session.created_at)
-        setSession(data.session.id)
-        onClose()
-        router.push('/quiz/results')
-      }, 1200)
+      setTimeout(onClose, 2000)
     } catch { setError('Something went wrong. Try again.') }
     setLoading(false)
   }
 
   function handleClose() { setStep('email'); setCode(''); setError(''); onClose() }
 
+  if (!open) return null
+
   return (
     <>
-      <div className={`b-overlay ${open ? 'open' : ''}`} onClick={handleClose} />
-      <div className={`b-sheet ${open ? 'open' : ''}`}>
+      <div className="b-overlay open" onClick={handleClose} />
+      <div className="b-sheet open">
         <div style={{ width: 36, height: 4, background: 'rgba(15,76,129,0.12)', borderRadius: 2, margin: '4px auto 18px' }} />
 
         {step === 'success' && (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', marginBottom: 4 }}>Welcome back!</div>
-            <div style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>Loading your last audit…</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', marginBottom: 4 }}>Results saved!</div>
+            <div style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>Reminders active. Tap any 🔔 to set a renewal date.</div>
           </div>
         )}
 
@@ -113,9 +96,10 @@ export default function SignInSheet({ open, onClose }: Props) {
 
         {step === 'email' && (
           <>
-            <div style={{ fontSize: 20, fontWeight: 900, color: '#1e293b', marginBottom: 4 }}>Pick up where you left off</div>
-            <div style={{ fontSize: 13, color: '#475569', fontWeight: 500, marginBottom: 20, lineHeight: 1.5 }}>
-              Enter your email — we&apos;ll send a quick code to verify it&apos;s you.
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#1e293b', marginBottom: 4 }}>Don&apos;t lose this</div>
+            <div style={{ fontSize: 13, color: '#475569', fontWeight: 500, marginBottom: 6, lineHeight: 1.5 }}>Save your results and get reminded before renewals — free.</div>
+            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500, marginBottom: 18, lineHeight: 1.5 }}>
+              We&apos;ll remind you before renewal · Track what you cancel · See if you actually saved money
             </div>
             <input className="gate-input" type="email" placeholder="your@gmail.com" value={email}
               onChange={(e) => setEmail(e.target.value)} style={{ marginBottom: 12 }} />
@@ -125,13 +109,8 @@ export default function SignInSheet({ open, onClose }: Props) {
               background: email.includes('@') ? 'linear-gradient(135deg, #0F4C81 0%, #2DD4BF 100%)' : 'rgba(148,163,184,0.3)',
               color: email.includes('@') ? '#fff' : '#94a3b8', border: 'none', borderRadius: 100,
               fontSize: 15, fontWeight: 700, cursor: email.includes('@') ? 'pointer' : 'default', fontFamily: 'Plus Jakarta Sans, sans-serif',
-            }}>{loading ? 'Sending code…' : 'Continue →'}</button>
-            <div style={{ textAlign: 'center', marginTop: 12, fontSize: 13, color: '#475569', fontWeight: 500 }}>
-              New here?{' '}
-              <button onClick={handleClose} style={{ color: '#0F4C81', fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13 }}>
-                Take the quiz →
-              </button>
-            </div>
+            }}>{loading ? 'Sending code…' : 'Save this →'}</button>
+            <p style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>No spam. Just renewal reminders.</p>
           </>
         )}
       </div>

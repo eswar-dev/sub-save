@@ -11,6 +11,7 @@ import FeedbackCard from '@/components/ui/FeedbackCard'
 import ReminderGateSheet from '@/components/sheets/ReminderGateSheet'
 import ReminderConfigSheet from '@/components/sheets/ReminderConfigSheet'
 import SignInSheet from '@/components/sheets/SignInSheet'
+import SaveSheet from '@/components/sheets/SaveSheet'
 
 export default function ResultsScreen() {
   const router = useRouter()
@@ -20,6 +21,7 @@ export default function ResultsScreen() {
   const [disagreeApp, setDisagreeApp] = useState<AppResult | null>(null)
   const [signinOpen, setSigninOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [saveOpen, setSaveOpen] = useState(false)
 
   const cancelResults = results.filter((r) => r.verdict === 'cancel')
   const reviewResults = results.filter((r) => r.verdict === 'review')
@@ -193,6 +195,26 @@ export default function ResultsScreen() {
             />
           ))}
 
+          {/* Save this — soft CTA, only shown when no email captured */}
+          {!userEmail && (
+            <button
+              onClick={() => { setSaveOpen(true); track('save_cta_tapped') }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: 'rgba(15,76,129,0.05)', border: '1.5px dashed rgba(15,76,129,0.2)',
+                borderRadius: 18, padding: '14px 16px', cursor: 'pointer', width: '100%',
+                textAlign: 'left', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: 4,
+              }}
+            >
+              <span style={{ fontSize: 24, flexShrink: 0 }}>💾</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0F4C81' }}>Save this for later</div>
+                <div style={{ fontSize: 11, color: '#475569', fontWeight: 500 }}>Get reminded before renewals · free</div>
+              </div>
+              <span style={{ fontSize: 16, color: '#94a3b8' }}>→</span>
+            </button>
+          )}
+
           {/* Family plan disclaimer */}
           <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontWeight: 500, marginTop: 4 }}>
             Prices shown are full plan cost. If you share with family, your actual savings are even higher.
@@ -246,6 +268,9 @@ export default function ResultsScreen() {
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
       />
+
+      {/* Save sheet */}
+      <SaveSheet open={saveOpen} onClose={() => setSaveOpen(false)} />
     </div>
   )
 }

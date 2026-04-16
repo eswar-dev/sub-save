@@ -48,6 +48,7 @@ export interface QuizStore {
   setReturningUser: (email: string, results: AppResult[], auditDate: string) => void
   startQuizWithEmail: (email: string) => void
   updateReminderConfig: (appId: string, config: AppResult['reminderConfig']) => void
+  retakeWithApps: () => void
 
   // ── FULL RESET ──
   reset: () => void
@@ -185,6 +186,25 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     set((state) => ({
       results: state.results.map((r) => r.id === appId ? { ...r, reminderConfig: config } : r),
     }))
+  },
+
+  retakeWithApps: () => {
+    const { results } = get()
+    const selected: Record<string, SelectedApp> = {}
+    for (const r of results) {
+      selected[r.id] = {
+        id: r.id, name: r.name,
+        cat: r.category as import('@/lib/data/apps').Category,
+        domain: r.domain, price: r.price, multi: false,
+        custom: r.custom, selectedPrice: r.price,
+      }
+    }
+    const totalSpend = Object.values(selected).reduce((s, a) => s + a.selectedPrice, 0)
+    if (typeof window !== 'undefined') {
+      const newId = `sps_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      localStorage.setItem('sps_session_id', newId)
+    }
+    set({ selected, totalSpend, answers: {}, cards: [], cardIndex: 0, results: [], sessionId: null, isReturningUser: false, lastAuditDate: null })
   },
 
   // ── FULL RESET ──
