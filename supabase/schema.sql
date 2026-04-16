@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   apps_selected    JSONB NOT NULL,         -- array of AppResult objects (see system.md §4)
   total_spend      INTEGER NOT NULL,       -- total monthly spend in ₹
   total_savings    INTEGER NOT NULL,       -- potential monthly savings (cancel-verdict sum) in ₹
-  reminder_paid    BOOLEAN DEFAULT FALSE,  -- true after ₹49 Razorpay payment confirmed
+  reminder_paid    BOOLEAN DEFAULT FALSE,  -- true after user provides email to activate reminders
   feedback_rating  INTEGER,               -- 1–5 star rating (from feedback card)
   feedback_text    TEXT,                  -- optional free-text feedback
   feedback_meta    JSONB,                  -- { decision, rating, text, recommend }

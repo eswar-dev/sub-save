@@ -17,75 +17,34 @@ const verdictColors: Record<string, string> = { cancel: '#dc2626', review: '#d97
 const verdictLabels: Record<string, string> = { cancel: 'CANCEL', review: 'REVIEW', keep: 'KEEP' }
 
 export default function ReminderGateSheet({ app, onClose, onSuccess, onSignIn }: Props) {
-  const { setReminderPaid, sessionId } = useQuizStore()
-  const [email, setEmail] = useState('')
+  const { setReminderPaid, sessionId, userEmail } = useQuizStore()
+  const [email, setEmail] = useState(userEmail ?? '')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
   const [imgError, setImgError] = useState(false)
 
   async function handleActivate() {
     if (!email.includes('@') || loading) return
     setLoading(true)
-    track('payment_initiated')
+    track('reminder_activate_tapped')
     try {
-      const res = await fetch('/api/payment/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: localStorage.getItem('sps_session_id'), email }),
-      })
-      const { order_id, amount, currency } = await res.json()
-
-      // Open Razorpay checkout
-      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-      if (!rzpKey || !order_id) {
-        // Fallback for when Razorpay is not configured (demo mode)
-        handlePaymentSuccess(email)
-        return
+      const sid = sessionId ?? (typeof window !== 'undefined' ? localStorage.getItem('sps_session_id') : null)
+      if (sid) {
+        await fetch(`/api/sessions/${sid}/reminder-paid`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
       }
-
-      const options = {
-        key: rzpKey,
-        amount,
-        currency,
-        order_id,
-        name: 'SubSmart',
-        description: 'Lifetime reminder access',
-        prefill: { email },
-        theme: { color: '#0F4C81' },
-        handler: () => handlePaymentSuccess(email),
-      }
-
-      if (typeof window !== 'undefined' && (window as any).Razorpay) {
-        const rzp = new (window as any).Razorpay(options)
-        rzp.open()
-      } else {
-        // Razorpay SDK not loaded — demo fallback
-        handlePaymentSuccess(email)
-      }
+      setReminderPaid(email)
+      track('email_captured', { source: 'reminder_gate' })
+      setSuccess(true)
+      setTimeout(() => onSuccess(), 1400)
     } catch {
-      // Demo fallback
-      handlePaymentSuccess(email)
+      setError('Something went wrong. Try again.')
     }
     setLoading(false)
-  }
-
-  function handlePaymentSuccess(userEmail: string) {
-    setReminderPaid(userEmail)
-    track('payment_completed', {})
-    track('email_captured', { source: 'gate' })
-
-    // Persist reminder_paid flag to DB so the reminder API allows writes
-    const sid = sessionId ?? localStorage.getItem('sps_session_id')
-    if (sid) {
-      fetch(`/api/sessions/${sid}/reminder-paid`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail }),
-      }).catch(() => {})
-    }
-
-    setSuccess(true)
-    setTimeout(() => { onSuccess() }, 1400)
   }
 
   return (
@@ -97,8 +56,8 @@ export default function ReminderGateSheet({ app, onClose, onSuccess, onSignIn }:
         {success ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', marginBottom: 4 }}>You&apos;re in!</div>
-            <div style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>All reminders activated. Tap any card to set a date.</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', marginBottom: 4 }}>Reminders activated!</div>
+            <div style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>Tap any card to set a renewal date.</div>
           </div>
         ) : (
           <>
@@ -109,7 +68,10 @@ export default function ReminderGateSheet({ app, onClose, onSuccess, onSignIn }:
                   {app.name[0]}
                 </div>
               ) : (
-                <img src={getLogoUrl(app.domain)} alt={app.name} width={44} height={44} style={{ borderRadius: 12, objectFit: 'contain', background: '#fff', padding: 4 }} onError={() => setImgError(true)} />
+                <img src={getLogoUrl(app.domain)} alt={app.name} width={44} height={44}
+                  style={{ borderRadius: 12, objectFit: 'contain', background: '#fff', padding: 4 }}
+                  onError={() => setImgError(true)}
+                />
               )}
               <div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: '#1e293b' }}>{app.name}</div>
@@ -124,36 +86,19 @@ export default function ReminderGateSheet({ app, onClose, onSuccess, onSignIn }:
               </div>
             </div>
 
-            {/* Value prop */}
-            <div style={{ fontSize: 14, color: '#475569', fontWeight: 500, lineHeight: 1.5, margin: '14px 0 10px' }}>
-              Save your full audit + get reminded before each app charges you again.
-            </div>
-
-            {/* Price row */}
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              background: 'linear-gradient(135deg, rgba(15,76,129,0.06) 0%, rgba(45,212,191,0.08) 100%)',
-              border: '1px solid rgba(45,212,191,0.2)', borderRadius: 14, padding: '12px 14px', marginBottom: 12,
-            }}>
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 900, color: '#0F4C81' }}>
-                  ₹49<span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>/account</span>
-                </div>
-                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>One-time · lifetime access · all apps</div>
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#0d9488', background: 'rgba(13,148,136,0.1)', borderRadius: 100, padding: '4px 10px' }}>
-                🔒 Secured
-              </div>
+            <div style={{ fontSize: 14, color: '#475569', fontWeight: 500, lineHeight: 1.5, margin: '14px 0 16px' }}>
+              Get reminded before {app.name} charges you again. Free — we&apos;ll email you before renewal.
             </div>
 
             <input
               className="gate-input"
               type="email"
-              placeholder="your@email.com"
+              placeholder="your@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{ marginBottom: 10 }}
             />
+            {error && <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 10, fontWeight: 500 }}>{error}</div>}
 
             <button
               onClick={handleActivate}
@@ -166,11 +111,11 @@ export default function ReminderGateSheet({ app, onClose, onSuccess, onSignIn }:
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
               }}
             >
-              {loading ? 'Processing…' : 'Save + Activate ₹49 →'}
+              {loading ? 'Activating…' : 'Activate reminders — free →'}
             </button>
 
             <div style={{ textAlign: 'center', marginTop: 10, fontSize: 13, color: '#475569', fontWeight: 500 }}>
-              Already saved?{' '}
+              Already have an account?{' '}
               <button
                 onClick={() => { onClose(); onSignIn?.() }}
                 style={{ color: '#0F4C81', fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline', fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13 }}
