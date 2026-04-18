@@ -7,15 +7,18 @@ import { APPS, CATEGORIES, App, getLogoUrl, hashColor, formatINR } from '@/lib/d
 import { track } from '@/lib/analytics'
 import PlanPickerSheet from '@/components/sheets/PlanPickerSheet'
 import ManualEntrySheet from '@/components/sheets/ManualEntrySheet'
+import SignInSheet from '@/components/sheets/SignInSheet'
+import ProfileAvatarButton from '@/components/ui/ProfileAvatarButton'
 
 const MAX_APPS = 10
 const MAX_CUSTOM = 5
 
 export default function AppSelectScreen() {
   const router = useRouter()
-  const { selected, totalSpend, selectApp, deselectApp, buildCards, resetAnswers, cards } = useQuizStore()
+  const { selected, totalSpend, selectApp, deselectApp, buildCards, resetAnswers, cards, userEmail } = useQuizStore()
   const [planApp, setPlanApp] = useState<App | null>(null)
   const [manualOpen, setManualOpen] = useState(false)
+  const [signinOpen, setSigninOpen] = useState(false)
   const [popCounter, setPopCounter] = useState(false)
   const [activeCat, setActiveCat] = useState<string>('streaming')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -119,6 +122,10 @@ export default function AppSelectScreen() {
         borderBottom: '1px solid rgba(255,255,255,0.45)',
         position: 'relative', zIndex: 10,
       }}>
+        <div style={{ position: 'absolute', top: 56, right: 16, zIndex: 20 }}>
+          <ProfileAvatarButton email={userEmail} onClick={() => setSigninOpen(true)} />
+        </div>
+
         {/* Back button */}
         <button
           onClick={() => router.back()}
@@ -187,7 +194,7 @@ export default function AppSelectScreen() {
       </div>
 
       {/* App grid scroll area */}
-      <div ref={scrollRef} className="scrollbar-hide" style={{ flex: 1, overflowY: 'auto', padding: '6px 20px 140px' }}>
+      <div ref={scrollRef} className="scrollbar-hide" style={{ flex: 1, overflowY: 'auto', padding: '6px 20px calc(150px + env(safe-area-inset-bottom, 0px))' }}>
         {CATEGORIES.map((cat) => {
           const apps = allApps.filter((a) => a.cat === cat.id && !a.custom)
           if (!apps.length) return null
@@ -258,7 +265,7 @@ export default function AppSelectScreen() {
       {/* Continue float bar */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '16px 20px 32px',
+        padding: `12px 16px max(16px, calc(12px + env(safe-area-inset-bottom, 0px)))`,
         background: 'linear-gradient(to top, rgba(219,234,254,0.96) 62%, transparent)',
         transform: selectedCount > 0 ? 'translateY(0)' : 'translateY(110%)',
         transition: 'transform 0.32s cubic-bezier(0.34,1.56,0.64,1)',
@@ -266,10 +273,15 @@ export default function AppSelectScreen() {
         <button
           onClick={handleContinue}
           style={{
-            width: '100%', height: 52,
+            width: '100%',
+            minHeight: 52,
+            padding: '12px 14px',
             background: 'linear-gradient(135deg, #0F4C81 0%, #2DD4BF 100%)',
             color: '#fff', border: 'none', borderRadius: 100,
             fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            lineHeight: 1.25,
+            whiteSpace: 'normal',
+            textAlign: 'center',
             boxShadow: '0 8px 24px rgba(15,76,129,0.28), inset 0 1px 0 rgba(255,255,255,0.2)',
             fontFamily: 'Plus Jakarta Sans, sans-serif',
           }}
@@ -293,6 +305,8 @@ export default function AppSelectScreen() {
         onClose={() => setManualOpen(false)}
         currentCustomCount={customCount}
       />
+
+      <SignInSheet open={signinOpen} onClose={() => setSigninOpen(false)} />
     </div>
   )
 }

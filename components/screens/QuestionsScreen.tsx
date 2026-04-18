@@ -7,6 +7,8 @@ import { Q2_OPTIONS_BY_Q1, Q1Answer } from '@/lib/scoring'
 import { getLogoUrl, hashColor, formatINR } from '@/lib/data/apps'
 import { track } from '@/lib/analytics'
 import { getOptTintClass } from '@/lib/utils'
+import ProfileAvatarButton from '@/components/ui/ProfileAvatarButton'
+import SignInSheet from '@/components/sheets/SignInSheet'
 
 const Q1_OPTIONS: string[] = ['This week', 'This month', 'Over a month ago', "Can't remember"]
 
@@ -14,7 +16,8 @@ export default function QuestionsScreen() {
   const router = useRouter()
   const routerRef = useRef(router)
   routerRef.current = router
-  const { cards, cardIndex, answers, totalSpend, selected, setAnswer, buildCards } = useQuizStore()
+  const { cards, cardIndex, answers, totalSpend, selected, setAnswer, buildCards, userEmail } = useQuizStore()
+  const [signinOpen, setSigninOpen] = useState(false)
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
   const [showSwipeCue, setShowSwipeCue] = useState(true)
   const touchStartY = useRef<number | null>(null)
@@ -163,15 +166,19 @@ export default function QuestionsScreen() {
           ))}
         </div>
 
-        {/* Mini counter */}
-        <div style={{
-          fontSize: 12, fontWeight: 800, color: '#0F4C81',
-          background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.5)',
-          borderRadius: 100, padding: '4px 11px', backdropFilter: 'blur(10px)',
-        }}>
-          {formatINR(totalSpend)}/mo
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            fontSize: 12, fontWeight: 800, color: '#0F4C81',
+            background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.5)',
+            borderRadius: 100, padding: '4px 11px', backdropFilter: 'blur(10px)',
+          }}>
+            {formatINR(totalSpend)}/mo
+          </div>
+          <ProfileAvatarButton email={userEmail} onClick={() => setSigninOpen(true)} />
         </div>
       </div>
+
+      <SignInSheet open={signinOpen} onClose={() => setSigninOpen(false)} />
 
       {/* Question card */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '104px 24px 40px' }}>

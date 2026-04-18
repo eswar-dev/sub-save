@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { AppResult } from '@/lib/scoring'
 
-const ADMIN_EMAILS = ['eswar@gmail.com']
+const ADMIN_EMAILS = ['eswar30082002@gmail.com']
 
 export async function GET(request: NextRequest) {
   const adminEmail = request.headers.get('x-admin-email')

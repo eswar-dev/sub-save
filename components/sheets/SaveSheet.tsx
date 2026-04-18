@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuizStore, getLocalSessionId } from '@/lib/store/quizStore'
 import { track } from '@/lib/analytics'
 
@@ -9,15 +9,64 @@ interface Props {
   onClose: () => void
 }
 
-type Step = 'email' | 'otp' | 'success'
+type Step = 'email' | 'otp' | 'success' | 'confirm_email'
 
 export default function SaveSheet({ open, onClose }: Props) {
-  const { setReminderPaid } = useQuizStore()
+  const { setReminderPaid, sessionId, userEmail } = useQuizStore()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [ignoreSessionEmail, setIgnoreSessionEmail] = useState(false)
+
+  function sessionEmailFromStorage(): string {
+    if (userEmail?.includes('@')) return userEmail.trim()
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('sps_email')?.trim() ?? ''
+  }
+
+  const resolvedEmail = sessionEmailFromStorage()
+
+  useEffect(() => {
+    if (!open) {
+      setIgnoreSessionEmail(false)
+      return
+    }
+    setError('')
+    setCode('')
+    if (!ignoreSessionEmail && resolvedEmail.includes('@')) {
+      setEmail(resolvedEmail)
+      setStep('confirm_email')
+    } else {
+      setEmail('')
+      setStep('email')
+    }
+  }, [open, userEmail, ignoreSessionEmail, resolvedEmail])
+
+  async function handleActivateExisting() {
+    if (!resolvedEmail.includes('@') || loading) return
+    setLoading(true)
+    setError('')
+    track('save_sheet_used_existing_session_email')
+    try {
+      const sid = sessionId ?? (typeof window !== 'undefined' ? localStorage.getItem('sps_session_id') : null)
+      if (sid) {
+        await fetch(`/api/sessions/${sid}/reminder-paid`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: resolvedEmail }),
+        })
+      }
+      setReminderPaid(resolvedEmail)
+      track('email_captured', { source: 'save_sheet', otp: false })
+      setStep('success')
+      setTimeout(onClose, 2000)
+    } catch {
+      setError('Something went wrong. Try again.')
+    }
+    setLoading(false)
+  }
 
   async function handleSendOTP() {
     if (!email.includes('@') || loading) return
@@ -45,14 +94,16 @@ export default function SaveSheet({ open, onClose }: Props) {
       const data = await res.json()
       if (!res.ok || !data.ok) { setError(data.error === 'Code expired' ? 'Code expired — go back and resend.' : 'Wrong code. Try again.'); setLoading(false); return }
       setReminderPaid(email)
-      track('email_captured', { source: 'save_sheet' })
+      track('email_captured', { source: 'save_sheet', otp: true })
       setStep('success')
       setTimeout(onClose, 2000)
     } catch { setError('Something went wrong. Try again.') }
     setLoading(false)
   }
 
-  function handleClose() { setStep('email'); setCode(''); setError(''); onClose() }
+  function handleClose() {
+    setStep('email'); setCode(''); setError(''); setIgnoreSessionEmail(false); onClose()
+  }
 
   if (!open) return null
 
@@ -68,6 +119,44 @@ export default function SaveSheet({ open, onClose }: Props) {
             <div style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', marginBottom: 4 }}>Results saved!</div>
             <div style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>Reminders active. Tap any 🔔 to set a renewal date.</div>
           </div>
+        )}
+
+        {step === 'confirm_email' && (
+          <>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#1e293b', marginBottom: 4 }}>Save to your email</div>
+            <div style={{ fontSize: 13, color: '#475569', fontWeight: 500, marginBottom: 16, lineHeight: 1.5 }}>
+              Use <strong>{resolvedEmail}</strong> for renewal reminders — no new code needed.
+            </div>
+            {error && <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 10, fontWeight: 500 }}>{error}</div>}
+            <button
+              type="button"
+              onClick={handleActivateExisting}
+              disabled={loading}
+              style={{
+                width: '100%', height: 50,
+                background: 'linear-gradient(135deg, #0F4C81 0%, #2DD4BF 100%)',
+                color: '#fff', border: 'none', borderRadius: 100,
+                fontSize: 15, fontWeight: 700, cursor: loading ? 'default' : 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif',
+                opacity: loading ? 0.85 : 1,
+              }}
+            >
+              {loading ? 'Saving…' : 'Save & enable reminders →'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIgnoreSessionEmail(true)
+                setStep('email')
+                setEmail('')
+                setError('')
+              }}
+              style={{
+                marginTop: 14, width: '100%', background: 'none', border: 'none', fontSize: 13, color: '#94a3b8', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif',
+              }}
+            >
+              Use a different email
+            </button>
+          </>
         )}
 
         {step === 'otp' && (

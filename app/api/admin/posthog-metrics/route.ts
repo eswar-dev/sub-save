@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 
-const ADMIN_EMAILS = ['eswar@gmail.com']
+const ADMIN_EMAILS = ['eswar30082002@gmail.com']
 
 const FUNNEL_EVENTS = [
   'quiz_started',

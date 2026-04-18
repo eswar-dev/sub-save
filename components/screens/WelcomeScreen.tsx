@@ -4,20 +4,19 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { track } from '@/lib/analytics'
 import SignInSheet from '@/components/sheets/SignInSheet'
-import BetaGateSheet, { isBetaVerified } from '@/components/sheets/BetaGateSheet'
+import ProfileAvatarButton from '@/components/ui/ProfileAvatarButton'
+// import BetaGateSheet, { isBetaVerified } from '@/components/sheets/BetaGateSheet'
+import { useQuizStore } from '@/lib/store/quizStore'
 
 export default function WelcomeScreen() {
   const router = useRouter()
+  const userEmail = useQuizStore((s) => s.userEmail)
   const [signinOpen, setSigninOpen] = useState(false)
-  const [betaOpen, setBetaOpen] = useState(false)
 
   function handleStart() {
     track('quiz_started')
-    if (isBetaVerified()) {
-      router.push('/quiz/apps')
-    } else {
-      setBetaOpen(true)
-    }
+    // Public beta: gate disabled — re-enable BetaGateSheet + isBetaVerified() when invite-only again
+    router.push('/quiz/apps')
   }
 
   return (
@@ -29,6 +28,17 @@ export default function WelcomeScreen() {
         background: 'linear-gradient(150deg,#dbeafe 0%,#e8f4fd 50%,#d4f6ef 100%)',
       }}
     >
+      <div
+        style={{
+          position: 'absolute',
+          top: 'max(16px, env(safe-area-inset-top, 0px))',
+          right: 'max(16px, env(safe-area-inset-right, 0px))',
+          zIndex: 5,
+        }}
+      >
+        <ProfileAvatarButton email={userEmail} onClick={() => setSigninOpen(true)} />
+      </div>
+
       {/* Ambient blobs */}
       <div
         style={{
@@ -166,8 +176,8 @@ export default function WelcomeScreen() {
       {/* Sign-in sheet */}
       <SignInSheet open={signinOpen} onClose={() => setSigninOpen(false)} />
 
-      {/* Beta gate sheet */}
-      <BetaGateSheet open={betaOpen} onClose={() => setBetaOpen(false)} />
+      {/* Beta gate sheet — paused for open beta; restore when using invite codes again */}
+      {/* <BetaGateSheet open={betaOpen} onClose={() => setBetaOpen(false)} /> */}
     </div>
   )
 }

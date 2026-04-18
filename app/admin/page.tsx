@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const ADMIN_EMAILS = ['eswar@gmail.com']
+const ADMIN_EMAILS = ['eswar30082002@gmail.com']
 
 interface Session {
   id: string

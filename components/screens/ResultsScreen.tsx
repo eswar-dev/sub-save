@@ -8,6 +8,7 @@ import { getLogoUrl, hashColor, formatINR } from '@/lib/data/apps'
 import { track } from '@/lib/analytics'
 import { formatDate } from '@/lib/utils'
 import FeedbackCard from '@/components/ui/FeedbackCard'
+import ProfileAvatarButton from '@/components/ui/ProfileAvatarButton'
 import ReminderGateSheet from '@/components/sheets/ReminderGateSheet'
 import ReminderConfigSheet from '@/components/sheets/ReminderConfigSheet'
 import SignInSheet from '@/components/sheets/SignInSheet'
@@ -16,6 +17,7 @@ import SaveSheet from '@/components/sheets/SaveSheet'
 export default function ResultsScreen() {
   const router = useRouter()
   const { results, totalSpend, sessionId, reminderPaid, userEmail, lastAuditDate, isReturningUser, resetAnswers } = useQuizStore()
+  const [copied, setCopied] = useState(false)
   const [gateApp, setGateApp] = useState<AppResult | null>(null)
   const [reminderApp, setReminderApp] = useState<AppResult | null>(null)
   const [disagreeApp, setDisagreeApp] = useState<AppResult | null>(null)
@@ -81,10 +83,16 @@ export default function ResultsScreen() {
     }
   }
 
-  function handleCopy() {
+  async function handleCopy() {
     const text = `My SubSmart audit:\n${results.map((r) => `${r.verdict === 'cancel' ? '❌' : r.verdict === 'review' ? '⚠️' : '✅'} ${r.name} — ₹${r.price}/mo`).join('\n')}\n\nCould save: ${formatINR(totalSavings)}/month`
-    navigator.clipboard?.writeText(text).catch(() => {})
-    track('share_clicked', { method: 'copy' })
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      track('share_clicked', { method: 'copy' })
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      track('share_clicked', { method: 'copy_failed' })
+    }
   }
 
   if (results.length === 0) return null
@@ -97,10 +105,16 @@ export default function ResultsScreen() {
       {/* Sticky header */}
       <div style={{
         flexShrink: 0, padding: '52px 20px 16px',
+        paddingTop: 'max(52px, calc(env(safe-area-inset-top, 0px) + 36px))',
+        position: 'relative',
         background: 'rgba(255,255,255,0.52)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)',
         borderBottom: '1px solid rgba(255,255,255,0.45)',
         zIndex: 10,
       }}>
+        <div style={{ position: 'absolute', top: 'max(16px, env(safe-area-inset-top, 0px))', right: 16, zIndex: 2 }}>
+          <ProfileAvatarButton email={userEmail} onClick={() => setSigninOpen(true)} />
+        </div>
+
         {/* Back button on its own row */}
         <button
           onClick={() => router.push('/quiz/apps')}
@@ -117,7 +131,7 @@ export default function ResultsScreen() {
         </button>
 
         {/* Title row */}
-        <div style={{ marginBottom: 10 }}>
+        <div style={{ marginBottom: 10, paddingRight: 48 }}>
           {isReturningUser && lastAuditDate && (
             <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, marginBottom: 2 }}>
               Welcome back 👋 · Last audit: {formatDate(lastAuditDate)}
@@ -229,9 +243,32 @@ export default function ResultsScreen() {
         padding: '14px 20px max(20px, env(safe-area-inset-bottom, 20px))',
         background: 'linear-gradient(to top, rgba(219,234,254,0.96) 62%, transparent)',
       }}>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={handleShare} style={shareButtonStyle}>📤 Share</button>
-          <button onClick={handleCopy} style={shareButtonStyle}>📋 Copy</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {copied && (
+            <div
+              role="status"
+              style={{
+                textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#0d9488',
+                animation: 'stagger-in 0.2s ease forwards',
+              }}
+            >
+              Copied to clipboard
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={handleShare} style={shareButtonStyle}>📤 Share</button>
+            <button
+              onClick={handleCopy}
+              style={{
+                ...shareButtonStyle,
+                ...(copied
+                  ? { borderColor: 'rgba(45,212,191,0.65)', background: 'rgba(204,251,241,0.55)' }
+                  : {}),
+              }}
+            >
+              {copied ? '✓ Copied' : '📋 Copy'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -276,10 +313,18 @@ export default function ResultsScreen() {
 }
 
 const shareButtonStyle: React.CSSProperties = {
-  flex: 1, height: 46,
-  background: 'rgba(255,255,255,0.62)', border: '1.5px solid rgba(255,255,255,0.5)',
-  borderRadius: 100, fontSize: 13, fontWeight: 700, color: '#0F4C81',
-  cursor: 'pointer', backdropFilter: 'blur(12px)',
+  flex: 1,
+  height: 46,
+  background: 'rgba(255,255,255,0.62)',
+  borderWidth: '1.5px',
+  borderStyle: 'solid',
+  borderColor: 'rgba(255,255,255,0.5)',
+  borderRadius: 100,
+  fontSize: 13,
+  fontWeight: 700,
+  color: '#0F4C81',
+  cursor: 'pointer',
+  backdropFilter: 'blur(12px)',
   fontFamily: 'Plus Jakarta Sans, sans-serif',
 }
 
